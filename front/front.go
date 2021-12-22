@@ -20,10 +20,9 @@ type ItWindow struct {
 	ControlBox *ui.Box
 	InfoBox    *ui.Box
 	DownBox    *ui.Box
-	GraphBox   *ui.Area
-	DataBox    *ui.Area
-	SpectrBox  *ui.Area
-	Graphic    ItPlot
+	Graph      *ui.Area
+	Text       *ui.Area
+	Spectr     *ui.Area
 }
 
 func MainStart() {
@@ -58,18 +57,18 @@ func (it *ItWindow) mainStart() {
 	it.InfoBox.SetPadded(true)
 	it.MainBox.Append(it.InfoBox, true)
 
-	it.GraphBox = ui.NewArea(ItPlot{})
-	it.InfoBox.Append(it.GraphBox, true)
+	it.Graph = ui.NewArea(ItPlot{Source: BuildGraphic()})
+	it.InfoBox.Append(it.Graph, true)
 
 	it.DownBox = ui.NewHorizontalBox()
 	it.DownBox.SetPadded(true)
 	it.InfoBox.Append(it.DownBox, true)
 
-	it.DataBox = ui.NewArea(ItPlot{})
-	it.DownBox.Append(it.DataBox, true)
+	it.Text = ui.NewArea(ItPlot{Source: BuildGraphic()})
+	it.DownBox.Append(it.Text, true)
 
-	it.SpectrBox = ui.NewArea(ItPlot{})
-	it.DownBox.Append(it.SpectrBox, true)
+	it.Spectr = ui.NewArea(ItPlot{Source: BuildGraphic()})
+	it.DownBox.Append(it.Spectr, true)
 
 	rand.Seed(time.Now().Unix())
 	/*for i := 0; i < 10; i++ {
@@ -100,9 +99,9 @@ func (it *ItWindow) mainStart() {
 func (it *ItWindow) mainMonitor() {
 	go func() {
 		for {
-			time.Sleep(time.Second)
-			if it.GraphBox != nil {
-				it.GraphBox.QueueRedrawAll()
+			time.Sleep(time.Millisecond * 100)
+			if it.Graph != nil {
+				it.Graph.QueueRedrawAll()
 			}
 		}
 	}()
