@@ -57,17 +57,17 @@ func (it *ItWindow) mainStart() {
 	it.InfoBox.SetPadded(true)
 	it.MainBox.Append(it.InfoBox, true)
 
-	it.Graph = ui.NewArea(ItPlot{Source: BuildGraphic()})
+	it.Graph = ui.NewArea(BuildGraphic())
 	it.InfoBox.Append(it.Graph, true)
 
 	it.DownBox = ui.NewHorizontalBox()
 	it.DownBox.SetPadded(true)
 	it.InfoBox.Append(it.DownBox, true)
 
-	it.Text = ui.NewArea(ItPlot{Source: BuildGraphic()})
+	it.Text = ui.NewArea(BuildGraphic())
 	it.DownBox.Append(it.Text, true)
 
-	it.Spectr = ui.NewArea(ItPlot{Source: BuildGraphic()})
+	it.Spectr = ui.NewArea(BuildGraphic())
 	it.DownBox.Append(it.Spectr, true)
 
 	rand.Seed(time.Now().Unix())
