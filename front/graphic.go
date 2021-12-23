@@ -3,17 +3,21 @@ package front
 import "github/massarakhsh/chaos/data"
 
 type ItGraphic struct {
-	ItPlot
+	ItSerial
 }
 
-var graphic ItGraphic
+var MainGraphic ItGraphic
 
 func BuildGraphic() *ItGraphic {
-	graphic := &ItGraphic{}
-	graphic.Source = graphic
-	return graphic
+	MainGraphic.Loader = &MainGraphic
+	return &MainGraphic
 }
 
-func (it *ItGraphic) LoadData() {
-	it.Load(data.Serial)
+func (it *ItGraphic) Probe() bool {
+	if data.Data.Sign != it.Sign {
+		it.Load(data.Data)
+		return true
+	} else {
+		return false
+	}
 }

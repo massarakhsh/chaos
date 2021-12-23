@@ -5,15 +5,15 @@ import (
 	"time"
 )
 
-type ItSerial struct {
+type ItData struct {
 	Sign       int
 	Length     int
 	XMin, XMax float64
 	Data       []float64
 }
 
-var Sign = 0
-var Serial *ItSerial
+var SignData = 0
+var Data *ItData
 
 func Generate() {
 	generate()
@@ -26,19 +26,19 @@ func Generate() {
 }
 
 func generate() {
-	Sign++
+	SignData++
 	length := 1024
-	if Serial != nil {
-		length = Serial.Length + 1
+	if Data != nil {
+		length = Data.Length + 1
 	}
-	serial := &ItSerial{}
-	serial.Sign = Sign
+	serial := &ItData{}
+	serial.Sign = SignData
 	serial.Length = length
 	serial.XMin = float64(-(length / 100))
 	serial.XMax = serial.XMin + float64(length)
 	serial.Data = make([]float64, serial.Length)
 	for n := 0; n < serial.Length; n++ {
-		serial.Data[n] = float64(n*n) / float64(length*length) * math.Sin(float64(n)/100)
+		serial.Data[n] = 0.8*math.Sin(float64(n)/100) + 1.2*math.Cos(float64(n)/70)
 	}
-	Serial = serial
+	Data = serial
 }

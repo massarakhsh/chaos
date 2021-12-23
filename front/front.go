@@ -67,7 +67,7 @@ func (it *ItWindow) mainStart() {
 	it.Text = ui.NewArea(BuildGraphic())
 	it.DownBox.Append(it.Text, true)
 
-	it.Spectr = ui.NewArea(BuildGraphic())
+	it.Spectr = ui.NewArea(BuildSpectr())
 	it.DownBox.Append(it.Spectr, true)
 
 	rand.Seed(time.Now().Unix())
@@ -101,7 +101,14 @@ func (it *ItWindow) mainMonitor() {
 		for {
 			time.Sleep(time.Millisecond * 100)
 			if it.Graph != nil {
-				it.Graph.QueueRedrawAll()
+				if MainGraphic.Probe() {
+					it.Graph.QueueRedrawAll()
+				}
+			}
+			if it.Spectr != nil {
+				if MainSpectr.Probe() {
+					it.Spectr.QueueRedrawAll()
+				}
 			}
 		}
 	}()
