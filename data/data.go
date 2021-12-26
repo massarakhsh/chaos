@@ -38,7 +38,7 @@ func generate() {
 	serial.XMax = serial.XMin + float64(length)
 	serial.Data = make([]float64, serial.Length)
 	for n := 0; n < serial.Length; n++ {
-		serial.Data[n] = 0.8*math.Sin(float64(n)/100) + 1.2*math.Cos(float64(n)/70)
+		serial.Data[n] = 0.8*math.Sin(float64(n)*math.Pi/100) + 1.2*math.Cos(float64(n)*math.Pi/70)
 	}
 	Data = serial
 }

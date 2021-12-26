@@ -22,6 +22,8 @@ type ItSerial struct {
 	XMin, XMax    float64
 	YMin, YMax    float64
 	XZero, YZero  float64
+	IsZeroCenter  bool
+	IsZeroMin     bool
 
 	Loader ItLoad
 }
@@ -183,14 +185,21 @@ func (it *ItSerial) Load(serial *data.ItData) {
 				it.YMax = val
 			}
 		}
-		if it.YMin >= 0 {
-			it.YMin = -it.YMax
-		} else if it.YMax <= 0 {
-			it.YMax = -it.YMin
-		} else if it.YMin > -it.YMax {
-			it.YMin = -it.YMax
-		} else if it.YMax < -it.YMin {
-			it.YMax = -it.YMin
+		if it.IsZeroCenter {
+			if it.YMin >= 0 {
+				it.YMin = -it.YMax
+			} else if it.YMax <= 0 {
+				it.YMax = -it.YMin
+			} else if it.YMin > -it.YMax {
+				it.YMin = -it.YMax
+			} else if it.YMax < -it.YMin {
+				it.YMax = -it.YMin
+			}
+		}
+		if it.IsZeroMin {
+			if it.YMin > 0 {
+				it.YMin = 0
+			}
 		}
 		if it.YMin >= it.YMax {
 			it.YMin -= 0.1

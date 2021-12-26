@@ -10,6 +10,7 @@ var MainGraphic ItGraphic
 
 func BuildGraphic() *ItGraphic {
 	MainGraphic.Loader = &MainGraphic
+	MainGraphic.IsZeroCenter = true
 	return &MainGraphic
 }
 
