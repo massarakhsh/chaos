@@ -1,6 +1,8 @@
 package front
 
-import "github/massarakhsh/chaos/data"
+import (
+	"github.com/massarakhsh/chaos/data"
+)
 
 type ItGraphic struct {
 	ItSerial

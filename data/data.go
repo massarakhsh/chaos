@@ -2,6 +2,7 @@ package data
 
 import (
 	"math"
+	"math/rand"
 	"time"
 )
 
@@ -12,27 +13,26 @@ type ItData struct {
 	Data       []float64
 }
 
-var SignData = 0
 var Data *ItData
 
 func Generate() {
-	generate()
+	genInit()
+	InitSerial()
 	go func() {
 		for {
-			time.Sleep(time.Millisecond * 10)
-			generate()
+			time.Sleep(time.Millisecond * 100)
+			LoadSerial()
 		}
 	}()
 }
 
-func generate() {
-	SignData++
+func genInit() {
 	length := 1024
 	if Data != nil {
 		length = Data.Length + 1
 	}
 	serial := &ItData{}
-	serial.Sign = SignData
+	serial.Sign = rand.Int()
 	serial.Length = length
 	serial.XMin = float64(-(length / 100))
 	serial.XMax = serial.XMin + float64(length)

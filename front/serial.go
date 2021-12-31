@@ -1,7 +1,7 @@
 package front
 
 import (
-	"github/massarakhsh/chaos/data"
+	"github.com/massarakhsh/chaos/data"
 
 	"github.com/andlabs/ui"
 )
