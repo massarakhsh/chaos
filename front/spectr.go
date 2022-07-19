@@ -1,8 +1,9 @@
 package front
 
 import (
-	"github/massarakhsh/chaos/data"
 	"math"
+
+	"github.com/massarakhsh/chaos/data"
 
 	"github.com/mjibson/go-dsp/fft"
 )
