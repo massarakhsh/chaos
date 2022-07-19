@@ -7,8 +7,12 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
+const MAX_WAVE = 256
+const MAX_HIST = 16
+
 type ItSpectr struct {
 	ItSerial
+	history [MAX_HIST][MAX_WAVE]float64
 }
 
 var MainSpectr ItSpectr
@@ -41,15 +45,17 @@ func (it *ItSpectr) loadData() (int, []float64) {
 }
 
 func (it *ItSpectr) storeData(sign int, info []complex128) {
-	count := 512
+	for h := 0; h+1 < MAX_HIST; h++ {
+		it.history[h] = it.history[h+1]
+	}
 	dia := len(info)
 	serial := &data.ItData{}
 	serial.Sign = sign
-	serial.Length = count
+	serial.Length = MAX_WAVE
 	serial.XMin = 0
-	serial.XMax = float64(count)
-	serial.Data = make([]float64, count)
-	for n := 0; n < count; n++ {
+	serial.XMax = float64(MAX_WAVE)
+	serial.Data = make([]float64, MAX_WAVE)
+	for n := 0; n < MAX_WAVE; n++ {
 		ampl := 0.0
 		if n > 1 {
 			frq := float64(dia) / float64(n)
@@ -61,7 +67,14 @@ func (it *ItSpectr) storeData(sign int, info []complex128) {
 				ampl = left*(rfrq+1-frq) + right*(frq-rfrq)
 			}
 		}
-		serial.Data[n] = ampl
+		it.history[MAX_HIST-1][n] = ampl
+	}
+	for n := 0; n < MAX_WAVE; n++ {
+		ampl := 0.0
+		for h := 0; h < MAX_HIST; h++ {
+			ampl += it.history[h][n]
+		}
+		serial.Data[n] = ampl / MAX_HIST
 	}
 	it.Load(serial)
 }

@@ -7,7 +7,8 @@ import (
 )
 
 const bd = 10
-const radius = 5
+
+//const radius = 5
 
 type ItLoad interface {
 	Probe() bool
@@ -105,9 +106,11 @@ func (it *ItSerial) drawAxes(p *ui.AreaDrawParams) {
 func (it *ItSerial) drawGraph(p *ui.AreaDrawParams) {
 	brush := mkSolidBrush(colorDodgerBlue, 0.5)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	path.NewFigure(it.List[0].XLoc, it.List[0].YLoc)
-	for i := 1; i < it.Count; i++ {
-		path.LineTo(it.List[i].XLoc, it.List[i].YLoc)
+	if len(it.List) > 0 {
+		path.NewFigure(it.List[0].XLoc, it.List[0].YLoc)
+		for i := 1; i < it.Count; i++ {
+			path.LineTo(it.List[i].XLoc, it.List[i].YLoc)
+		}
 	}
 	path.End()
 	p.Context.Stroke(path, brush, it.SP)

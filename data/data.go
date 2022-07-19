@@ -2,6 +2,7 @@ package data
 
 import (
 	"math"
+	"sync"
 	"time"
 )
 
@@ -12,33 +13,87 @@ type ItData struct {
 	Data       []float64
 }
 
-var SignData = 0
-var Data *ItData
+type ItReal struct {
+	At   time.Time
+	Data float64
+}
+
+const sourceMax = 4096
+
+var sourceStart time.Time
+var sourceData []ItReal
+var sourcePos int
+var sourceSign int
+var sourceLock sync.Mutex
 
 func Generate() {
-	generate()
+	genPreset()
 	go func() {
 		for {
-			time.Sleep(time.Millisecond * 10)
-			generate()
+			genAppendMath()
+			time.Sleep(time.Microsecond * 1000)
 		}
 	}()
 }
 
-func generate() {
-	SignData++
-	length := 1024
-	if Data != nil {
-		length = Data.Length + 1
+func genPreset() {
+	sourceLock.Lock()
+	sourceStart = time.Now()
+	sourceData = make([]ItReal, sourceMax)
+	for old := 0; old < sourceMax; old++ {
+		at := sourceStart.Add(-time.Duration(old) * time.Microsecond)
+		sourceData[sourceMax-1-old].At = at
+		sourceData[sourceMax-1-old].Data = 0
 	}
-	serial := &ItData{}
-	serial.Sign = SignData
-	serial.Length = length
-	serial.XMin = float64(-(length / 100))
-	serial.XMax = serial.XMin + float64(length)
-	serial.Data = make([]float64, serial.Length)
-	for n := 0; n < serial.Length; n++ {
-		serial.Data[n] = 0.8*math.Sin(float64(n)*math.Pi/100) + 1.2*math.Cos(float64(n)*math.Pi/70)
+	sourcePos = 0
+	sourceSign++
+	sourceLock.Unlock()
+}
+
+func genAppendMath() {
+	var real ItReal
+	real.At = time.Now()
+	temp := real.At.Sub(sourceStart).Seconds()
+	value := 1.0*math.Sin(temp*math.Pi*20) + 0.5*math.Sin(temp*math.Pi*41)
+	real.Data = value
+	genAppendReal([]ItReal{real})
+}
+
+func genAppendReal(reals []ItReal) {
+	sourceLock.Lock()
+	for nr := 0; nr < len(reals); nr++ {
+		sourceData[sourcePos] = reals[nr]
+		sourcePos++
+		if sourcePos >= sourceMax {
+			sourcePos = 0
+		}
 	}
-	Data = serial
+	sourceSign++
+	sourceLock.Unlock()
+}
+
+func GetData(sign int) *ItData {
+	if sign == sourceSign {
+		return nil
+	}
+	sourceLock.Lock()
+	data := &ItData{}
+	data.Sign = sourceSign
+	data.Length = sourceMax
+	data.Data = make([]float64, sourceMax)
+	for old := 0; old < sourceMax; old++ {
+		pos := sourcePos + old
+		if pos >= sourceMax {
+			pos -= sourceMax
+		}
+		data.Data[old] = sourceData[pos].Data
+		if old == 0 {
+			data.XMin = sourceData[pos].At.Sub(sourceStart).Seconds()
+		}
+		if old == sourceMax-1 {
+			data.XMax = sourceData[pos].At.Sub(sourceStart).Seconds()
+		}
+	}
+	sourceLock.Unlock()
+	return data
 }

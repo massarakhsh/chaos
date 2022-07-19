@@ -21,7 +21,7 @@ type ItWindow struct {
 	InfoBox    *ui.Box
 	DownBox    *ui.Box
 	Graph      *ui.Area
-	Text       *ui.Area
+	Org        *ui.Area
 	Spectr     *ui.Area
 }
 
@@ -64,8 +64,8 @@ func (it *ItWindow) mainStart() {
 	it.DownBox.SetPadded(true)
 	it.InfoBox.Append(it.DownBox, true)
 
-	it.Text = ui.NewArea(BuildGraphic())
-	it.DownBox.Append(it.Text, true)
+	it.Org = ui.NewArea(BuildOrg())
+	it.DownBox.Append(it.Org, true)
 
 	it.Spectr = ui.NewArea(BuildSpectr())
 	it.DownBox.Append(it.Spectr, true)

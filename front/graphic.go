@@ -15,8 +15,8 @@ func BuildGraphic() *ItGraphic {
 }
 
 func (it *ItGraphic) Probe() bool {
-	if data.Data.Sign != it.Sign {
-		it.Load(data.Data)
+	if dt := data.GetData(it.Sign); dt != nil {
+		it.Load(dt)
 		return true
 	} else {
 		return false
