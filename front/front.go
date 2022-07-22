@@ -1,6 +1,7 @@
 package front
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -23,6 +24,8 @@ type ItWindow struct {
 	Graph      *ui.Area
 	Org        *ui.Area
 	Spectr     *ui.Area
+	ButRes     *ui.Button
+	ButColRes  *ui.ColorButton
 }
 
 func MainStart() {
@@ -64,11 +67,22 @@ func (it *ItWindow) mainStart() {
 	it.DownBox.SetPadded(true)
 	it.InfoBox.Append(it.DownBox, true)
 
-	it.Org = ui.NewArea(BuildOrg())
-	it.DownBox.Append(it.Org, true)
+	it.ButColRes = ui.NewColorButton()
+	brush := mkSolidBrush(colorDodgerBlue, 1.0)
+	it.ButColRes.SetColor(brush.R,
+		brush.G,
+		brush.B,
+		brush.A)
+	it.ButColRes.OnChanged(func(*ui.ColorButton) {
+		fmt.Println("Color changed")
+	})
+	it.DownBox.Append(it.ButColRes, false)
 
 	it.Spectr = ui.NewArea(BuildSpectr())
 	it.DownBox.Append(it.Spectr, true)
+
+	it.Org = ui.NewArea(BuildOrg())
+	it.DownBox.Append(it.Org, true)
 
 	rand.Seed(time.Now().Unix())
 	/*for i := 0; i < 10; i++ {
@@ -79,18 +93,6 @@ func (it *ItWindow) mainStart() {
 		})
 		vbox.Append(datapoints[i], false)
 	}*/
-
-	//colorButton = ui.NewColorButton()
-	// TODO inline these
-	//brush := mkSolidBrush(colorDodgerBlue, 1.0)
-	//colorButton.SetColor(brush.R,
-	//	brush.G,
-	//	brush.B,
-	//	brush.A)
-	//colorButton.OnChanged(func(*ui.ColorButton) {
-	//	histogram.QueueRedrawAll()
-	//})
-	//vbox.Append(colorButton, false)
 
 	it.mainMonitor()
 	it.Window.Show()

@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/tarm/serial"
@@ -23,6 +22,7 @@ func InitSerial() {
 	}
 }
 
+/*
 func LoadSerial() {
 	if SPort == nil {
 		InitSerial()
@@ -41,3 +41,4 @@ func LoadSerial() {
 		Data.Sign = rand.Int()
 	}
 }
+*/
