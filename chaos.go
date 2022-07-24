@@ -10,6 +10,6 @@ import (
 )
 
 func main() {
-	data.Generate()
+	data.StartData()
 	front.MainStart()
 }

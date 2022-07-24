@@ -8,11 +8,11 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
-const MAX_WAVE = 256
+const MAX_WAVE = 1024
 const MAX_HIST = 16
 
 type ItSpectr struct {
-	ItSerial
+	ItPlot
 	history [MAX_HIST][MAX_WAVE]float64
 }
 
@@ -25,19 +25,23 @@ func BuildSpectr() *ItSpectr {
 }
 
 func (it *ItSpectr) Probe() bool {
-	if MainGraphic.Sign != it.Sign {
-		sign, data := it.loadData()
+	if MainGraphic.Sign == it.Sign {
+		return false
+	} else if sign, data := it.loadData(); data == nil {
+		return false
+	} else {
 		spectr := fft.FFTReal(data)
 		it.storeData(sign, spectr)
 		return true
-	} else {
-		return false
 	}
 }
 
 func (it *ItSpectr) loadData() (int, []float64) {
 	sign := MainGraphic.Sign
 	count := MainGraphic.Count
+	if count <= 0 {
+		return 0, nil
+	}
 	info := make([]float64, count)
 	for n := 0; n < count; n++ {
 		info[n] = MainGraphic.List[n].YVal

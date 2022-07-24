@@ -1,6 +1,8 @@
 package front
 
 import (
+	"math"
+
 	"github.com/massarakhsh/chaos/data"
 
 	"github.com/andlabs/ui"
@@ -14,7 +16,7 @@ type ItLoad interface {
 	Probe() bool
 }
 
-type ItSerial struct {
+type ItPlot struct {
 	Sign          int
 	SP            *ui.DrawStrokeParams
 	Width, Height float64
@@ -25,6 +27,8 @@ type ItSerial struct {
 	XZero, YZero  float64
 	IsZeroCenter  bool
 	IsZeroMin     bool
+	XFirst, XStep float64
+	YFirst, YStep float64
 
 	Loader ItLoad
 }
@@ -34,7 +38,7 @@ type ItPoint struct {
 	XLoc, YLoc float64
 }
 
-func (it *ItSerial) Draw(a *ui.Area, p *ui.AreaDrawParams) {
+func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
 	it.Loader.Probe()
 	it.resize(p)
 	it.clear(p)
@@ -44,21 +48,21 @@ func (it *ItSerial) Draw(a *ui.Area, p *ui.AreaDrawParams) {
 	it.drawPens(p)
 }
 
-func (it *ItSerial) resize(p *ui.AreaDrawParams) {
+func (it *ItPlot) resize(p *ui.AreaDrawParams) {
 	it.Width, it.Height = p.AreaWidth-2*bd, p.AreaHeight-2*bd
 	m := ui.DrawNewMatrix()
 	m.Translate(bd, bd)
 	p.Context.Transform(m)
 }
 
-func (it *ItSerial) clear(p *ui.AreaDrawParams) {
+func (it *ItPlot) clear(p *ui.AreaDrawParams) {
 	it.SP = &ui.DrawStrokeParams{
 		Cap:        ui.DrawLineCapFlat,
 		Join:       ui.DrawLineJoinMiter,
 		Thickness:  2,
 		MiterLimit: ui.DrawDefaultMiterLimit,
 	}
-	brush := mkSolidBrush(colorWhite, 1.0)
+	brush := mkSolidBrush(0xffffff, 1.0)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
 	path.AddRectangle(-bd, -bd, it.Width+2*bd, it.Height+2*bd)
 	path.End()
@@ -66,45 +70,92 @@ func (it *ItSerial) clear(p *ui.AreaDrawParams) {
 	path.Free()
 }
 
-func (it *ItSerial) calc(p *ui.AreaDrawParams) {
+func (it *ItPlot) calc(p *ui.AreaDrawParams) {
 	it.XZero, it.YZero = 0, it.Height
 	if length := it.Count; length >= 2 {
-		x0 := it.XMin * it.Width / (it.XMin - it.XMax)
-		if x0 < 0 {
-			x0 = 0
-		} else if x0 > it.Width {
-			x0 = it.Width
+		it.XZero = it.locFromX(0)
+		if it.XZero < 0 {
+			it.XZero = 0
+		} else if it.XZero > it.Width {
+			it.XZero = it.Width
 		}
-		it.XZero = x0
-		y0 := it.YMax * it.Height / (it.YMax - it.YMin)
-		if y0 < 0 {
-			y0 = 0
-		} else if y0 > it.Height {
-			y0 = it.Height
+		it.YZero = it.locFromY(0)
+		if it.YZero < 0 {
+			it.YZero = 0
+		} else if it.YZero > it.Height {
+			it.YZero = it.Height
 		}
-		it.YZero = y0
 		for i := 0; i < length; i++ {
 			point := &it.List[i]
-			point.XLoc = (0*(it.XMax-point.XVal) + it.Width*(point.XVal-it.XMin)) / (it.XMax - it.XMin)
-			point.YLoc = (0*(point.YVal-it.YMin) + it.Height*(it.YMax-point.YVal)) / (it.YMax - it.YMin)
+			point.XLoc = it.locFromX(point.XVal)
+			point.YLoc = it.locFromY(point.YVal)
 		}
+		it.XFirst, it.XStep = it.findScale(it.XMin, it.XMax)
+		it.YFirst, it.YStep = it.findScale(it.YMin, it.YMax)
 	}
 }
 
-func (it *ItSerial) drawAxes(p *ui.AreaDrawParams) {
-	brush := mkSolidBrush(colorBlack, 1.0)
-	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	path.NewFigure(it.XZero, 0)
-	path.LineTo(it.XZero, it.Height)
-	path.NewFigure(0, it.YZero)
-	path.LineTo(it.Width, it.YZero)
-	path.End()
-	p.Context.Stroke(path, brush, it.SP)
-	path.Free()
+func (it *ItPlot) locFromX(x float64) float64 {
+	return (0*(it.XMax-x) + it.Width*(x-it.XMin)) / (it.XMax - it.XMin)
 }
 
-func (it *ItSerial) drawGraph(p *ui.AreaDrawParams) {
-	brush := mkSolidBrush(colorDodgerBlue, 0.5)
+func (it *ItPlot) locFromY(y float64) float64 {
+	return (0*(y-it.YMin) + it.Height*(it.YMax-y)) / (it.YMax - it.YMin)
+}
+
+func (it *ItPlot) locToX(x float64) float64 {
+	return (it.XMin*(it.Width-x) + it.XMax*(x-0)) / it.Width
+}
+
+func (it *ItPlot) locToY(y float64) float64 {
+	return (it.YMin*(y-0) + it.YMax*(it.Height-y)) / it.Height
+}
+
+func (it *ItPlot) findScale(min, max float64) (float64, float64) {
+	step := 1.0
+	for step*10 > max-min {
+		step /= 10
+	}
+	for step*100 < max-min {
+		step *= 10
+	}
+	for step*20 < max-min {
+		step *= 2
+	}
+	first := math.Floor(min/step) - step
+	for first < min {
+		first += step
+	}
+	return first, step
+}
+
+func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
+	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
+		for x := it.XFirst; x < it.XMax; x += it.XStep {
+			if xt := it.locFromX(x); xt >= 0 && xt < it.Width {
+				path.NewFigure(xt, 0)
+				path.LineTo(xt, it.Height)
+			}
+		}
+		path.End()
+		brush := mkSolidBrush(0x808080, 0.5)
+		p.Context.Stroke(path, brush, it.SP)
+		path.Free()
+	}
+	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
+		path.NewFigure(it.XZero, 0)
+		path.LineTo(it.XZero, it.Height)
+		path.NewFigure(0, it.YZero)
+		path.LineTo(it.Width, it.YZero)
+		path.End()
+		brush := mkSolidBrush(0x000000, 1.0)
+		p.Context.Stroke(path, brush, it.SP)
+		path.Free()
+	}
+}
+
+func (it *ItPlot) drawGraph(p *ui.AreaDrawParams) {
+	brush := mkSolidBrush(0x5599ff, 0.5)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
 	if len(it.List) > 0 {
 		path.NewFigure(it.List[0].XLoc, it.List[0].YLoc)
@@ -117,7 +168,7 @@ func (it *ItSerial) drawGraph(p *ui.AreaDrawParams) {
 	path.Free()
 }
 
-func (it *ItSerial) drawPens(p *ui.AreaDrawParams) {
+func (it *ItPlot) drawPens(p *ui.AreaDrawParams) {
 	/*if data.Ser.Current >= 0 {
 		xs, ys := pointLocations(it.Width, it.Height)
 		path := ui.DrawNewPath(ui.DrawFillModeWinding)
@@ -134,7 +185,7 @@ func (it *ItSerial) drawPens(p *ui.AreaDrawParams) {
 	}*/
 }
 
-func (it *ItSerial) MouseEvent(a *ui.Area, me *ui.AreaMouseEvent) {
+func (it *ItPlot) MouseEvent(a *ui.Area, me *ui.AreaMouseEvent) {
 	/*xs, ys := pointLocations(it.Width, it.Height)
 
 	data.Ser.Current = -1
@@ -148,20 +199,20 @@ func (it *ItSerial) MouseEvent(a *ui.Area, me *ui.AreaMouseEvent) {
 	a.QueueRedrawAll()
 }
 
-func (it *ItSerial) MouseCrossed(a *ui.Area, left bool) {
+func (it *ItPlot) MouseCrossed(a *ui.Area, left bool) {
 	// do nothing
 }
 
-func (it *ItSerial) DragBroken(a *ui.Area) {
+func (it *ItPlot) DragBroken(a *ui.Area) {
 	// do nothing
 }
 
-func (it *ItSerial) KeyEvent(a *ui.Area, ke *ui.AreaKeyEvent) (handled bool) {
+func (it *ItPlot) KeyEvent(a *ui.Area, ke *ui.AreaKeyEvent) (handled bool) {
 	// reject all keys
 	return false
 }
 
-func (it *ItSerial) Load(serial *data.ItData) {
+func (it *ItPlot) Load(serial *data.ItData) {
 	if serial == nil || serial.Length < 2 {
 		it.Count = 0
 		it.List = []ItPoint{}

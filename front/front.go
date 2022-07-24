@@ -1,31 +1,15 @@
 package front
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
-)
-
-const (
-	colorWhite      = 0xFFFFFF
-	colorBlack      = 0x000000
-	colorDodgerBlue = 0x1E90FF
+	"github.com/massarakhsh/chaos/data"
 )
 
 type ItWindow struct {
-	Window     *ui.Window
-	MainBox    *ui.Box
-	ControlBox *ui.Box
-	InfoBox    *ui.Box
-	DownBox    *ui.Box
-	Graph      *ui.Area
-	Org        *ui.Area
-	Spectr     *ui.Area
-	ButRes     *ui.Button
-	ButColRes  *ui.ColorButton
 }
 
 func MainStart() {
@@ -34,8 +18,8 @@ func MainStart() {
 }
 
 func (it *ItWindow) mainStart() {
+	rand.Seed(time.Now().Unix())
 	mainwin := ui.NewWindow("ХАОС. Обработка временных серий", 800, 600, true)
-	it.Window = mainwin
 
 	mainwin.SetMargined(true)
 	mainwin.OnClosing(func(*ui.Window) bool {
@@ -48,72 +32,88 @@ func (it *ItWindow) mainStart() {
 		return true
 	})
 
-	it.MainBox = ui.NewHorizontalBox()
-	it.MainBox.SetPadded(true)
-	mainwin.SetChild(it.MainBox)
+	if mainBox := it.buildMainBox(); mainBox != nil {
+		mainwin.SetChild(mainBox)
+	}
 
-	it.ControlBox = ui.NewVerticalBox()
-	it.ControlBox.SetPadded(true)
-	it.MainBox.Append(it.ControlBox, false)
-
-	it.InfoBox = ui.NewVerticalBox()
-	it.InfoBox.SetPadded(true)
-	it.MainBox.Append(it.InfoBox, true)
-
-	it.Graph = ui.NewArea(BuildGraphic())
-	it.InfoBox.Append(it.Graph, true)
-
-	it.DownBox = ui.NewHorizontalBox()
-	it.DownBox.SetPadded(true)
-	it.InfoBox.Append(it.DownBox, true)
-
-	it.ButColRes = ui.NewColorButton()
-	brush := mkSolidBrush(colorDodgerBlue, 1.0)
-	it.ButColRes.SetColor(brush.R,
-		brush.G,
-		brush.B,
-		brush.A)
-	it.ButColRes.OnChanged(func(*ui.ColorButton) {
-		fmt.Println("Color changed")
-	})
-	it.DownBox.Append(it.ButColRes, false)
-
-	it.Spectr = ui.NewArea(BuildSpectr())
-	it.DownBox.Append(it.Spectr, true)
-
-	it.Org = ui.NewArea(BuildOrg())
-	it.DownBox.Append(it.Org, true)
-
-	rand.Seed(time.Now().Unix())
-	/*for i := 0; i < 10; i++ {
-		datapoints[i] = ui.NewSpinbox(0, 100)
-		datapoints[i].SetValue(rand.Intn(101))
-		datapoints[i].OnChanged(func(*ui.Spinbox) {
-			histogram.QueueRedrawAll()
-		})
-		vbox.Append(datapoints[i], false)
-	}*/
-
-	it.mainMonitor()
-	it.Window.Show()
+	mainwin.Show()
 }
 
-func (it *ItWindow) mainMonitor() {
+func (it *ItWindow) buildMainBox() *ui.Box {
+	box := ui.NewHorizontalBox()
+	box.SetPadded(true)
+	if controlBox := it.buildControlBox(); controlBox != nil {
+		box.Append(controlBox, false)
+	}
+	if infoBox := it.buildInfoBox(); infoBox != nil {
+		box.Append(infoBox, true)
+	}
+	return box
+}
+
+func (it *ItWindow) buildControlBox() *ui.Box {
+	box := ui.NewVerticalBox()
+	box.SetPadded(true)
+	if combo := ui.NewCombobox(); combo != nil {
+		combo.Append("0. Останов")
+		combo.Append("1. Синусоида")
+		combo.Append("2. Двойная синусоида")
+		combo.OnSelected(func(c *ui.Combobox) {
+			data.GenReset()
+		})
+		box.Append(combo, false)
+	}
+	if button := ui.NewButton("Сброс"); button != nil {
+		button.OnClicked(func(b *ui.Button) {
+			data.GenReset()
+		})
+		box.Append(button, false)
+	}
+	return box
+}
+
+func (it *ItWindow) buildInfoBox() *ui.Box {
+	box := ui.NewVerticalBox()
+	box.SetPadded(true)
+	if elm := it.buildPlotBox(); elm != nil {
+		box.Append(elm, true)
+	}
+	if elm := it.buildSpectrBox(); elm != nil {
+		box.Append(elm, true)
+	}
+	return box
+}
+
+func (it *ItWindow) buildPlotBox() *ui.Box {
+	box := ui.NewHorizontalBox()
+	box.SetPadded(true)
+	graph := ui.NewArea(BuildGraphic())
+	box.Append(graph, true)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond * 100)
-			if it.Graph != nil {
-				if MainGraphic.Probe() {
-					it.Graph.QueueRedrawAll()
-				}
-			}
-			if it.Spectr != nil {
-				if MainSpectr.Probe() {
-					it.Spectr.QueueRedrawAll()
-				}
+			if MainGraphic.Probe() {
+				graph.QueueRedrawAll()
 			}
 		}
 	}()
+	return box
+}
+
+func (it *ItWindow) buildSpectrBox() *ui.Box {
+	box := ui.NewVerticalBox()
+	box.SetPadded(true)
+	spectr := ui.NewArea(BuildSpectr())
+	box.Append(spectr, true)
+	go func() {
+		for {
+			time.Sleep(time.Millisecond * 100)
+			if MainSpectr.Probe() {
+				spectr.QueueRedrawAll()
+			}
+		}
+	}()
+	return box
 }
 
 // helper to quickly set a brush color

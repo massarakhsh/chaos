@@ -5,7 +5,7 @@ import (
 )
 
 type ItGraphic struct {
-	ItSerial
+	ItPlot
 }
 
 var MainGraphic ItGraphic
