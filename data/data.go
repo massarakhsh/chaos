@@ -17,7 +17,10 @@ type ItPot struct {
 	Data float64
 }
 
-var sourceDir = 0
+const SOURCE_SERIAL = 0
+const SOURCE_MODEL = 1
+
+var sourceDir = SOURCE_SERIAL
 var sourceLength = 16394
 var sourceStart time.Time
 var sourceData []ItPot
@@ -31,7 +34,9 @@ func StartData() {
 	go func() {
 		for {
 			var pots []ItPot
-			if sourceDir == 0 {
+			if sourceDir == SOURCE_SERIAL {
+				pots = genPotSerial()
+			} else if sourceDir == SOURCE_MODEL {
 				pots = genPotModel()
 			}
 			if pots != nil {
