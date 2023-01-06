@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/tarm/serial"
@@ -12,8 +13,13 @@ var SConf *serial.Config
 var SPort *serial.Port
 
 func serialInit() bool {
-	for ns := 3; ns >= 0; ns-- {
-		dev := fmt.Sprintf("/dev/ttyUSB%d", ns)
+	for ns := 7; ns >= 0; ns-- {
+		var dev string
+		if os := runtime.GOOS; os == "linux" {
+			dev = fmt.Sprintf("/dev/ttyUSB%d", ns)
+		} else if os == "windows" {
+			dev = fmt.Sprintf("COM%d", ns)
+		}
 		conf := &serial.Config{Name: dev, Baud: 115200, ReadTimeout: time.Millisecond * 10}
 		if port, err := serial.OpenPort(conf); err == nil {
 			SConf = conf
