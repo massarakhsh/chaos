@@ -39,7 +39,7 @@ type ItPoint struct {
 }
 
 func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
-	it.Loader.Probe()
+	//it.Loader.Probe()
 	it.resize(p)
 	it.clear(p)
 	it.calc(p)

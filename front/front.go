@@ -12,6 +12,9 @@ import (
 type ItWindow struct {
 }
 
+var DuraUpdate = 1000
+var NeedUpdate = 0x3
+
 func MainStart() {
 	it := &ItWindow{}
 	ui.Main(it.mainStart)
@@ -55,13 +58,42 @@ func (it *ItWindow) buildControlBox() *ui.Box {
 	box := ui.NewVerticalBox()
 	box.SetPadded(true)
 	if combo := ui.NewCombobox(); combo != nil {
-		combo.Append("0. Останов")
-		combo.Append("1. Синусоида")
-		combo.Append("2. Двойная синусоида")
+		combo.Append("Останов")
+		combo.Append("Модель")
+		combo.Append("COM-порт")
 		combo.OnSelected(func(c *ui.Combobox) {
-			data.GenReset()
+			if sel := c.Selected(); sel == 1 {
+				data.SetSource(data.SOURCE_MODEL)
+			} else if sel == 2 {
+				data.SetSource(data.SOURCE_SERIAL)
+			} else {
+				data.SetSource(data.SOURCE_NO)
+			}
 		})
 		box.Append(combo, false)
+		combo.SetSelected(2)
+	}
+	if combo := ui.NewCombobox(); combo != nil {
+		combo.Append("Пошагово")
+		combo.Append("1 Гц")
+		combo.Append("5 Гц")
+		combo.OnSelected(func(c *ui.Combobox) {
+			if sel := c.Selected(); sel == 1 {
+				DuraUpdate = 1000
+			} else if sel == 2 {
+				DuraUpdate = 200
+			} else {
+				DuraUpdate = 0
+			}
+		})
+		box.Append(combo, false)
+		combo.SetSelected(1)
+	}
+	if button := ui.NewButton("Обновить"); button != nil {
+		button.OnClicked(func(b *ui.Button) {
+			NeedUpdate = 0x3
+		})
+		box.Append(button, false)
 	}
 	if button := ui.NewButton("Сброс"); button != nil {
 		button.OnClicked(func(b *ui.Button) {
@@ -90,10 +122,19 @@ func (it *ItWindow) buildPlotBox() *ui.Box {
 	graph := ui.NewArea(BuildGraphic())
 	box.Append(graph, true)
 	go func() {
+		nexttime := time.Now()
 		for {
-			time.Sleep(time.Millisecond * 100)
-			if MainGraphic.Probe() {
-				graph.QueueRedrawAll()
+			time.Sleep(time.Millisecond * 10)
+			if time.Now().After(nexttime) {
+				if DuraUpdate > 0 {
+					nexttime = time.Now().Add(time.Millisecond * time.Duration(DuraUpdate))
+				}
+				if DuraUpdate > 0 || (NeedUpdate&0x1) != 0 {
+					NeedUpdate &= 0xfe
+					if MainGraphic.Probe() {
+						graph.QueueRedrawAll()
+					}
+				}
 			}
 		}
 	}()
@@ -106,10 +147,19 @@ func (it *ItWindow) buildSpectrBox() *ui.Box {
 	spectr := ui.NewArea(BuildSpectr())
 	box.Append(spectr, true)
 	go func() {
+		nexttime := time.Now()
 		for {
-			time.Sleep(time.Millisecond * 100)
-			if MainSpectr.Probe() {
-				spectr.QueueRedrawAll()
+			time.Sleep(time.Millisecond * 10)
+			if time.Now().After(nexttime) {
+				if DuraUpdate > 0 {
+					nexttime = time.Now().Add(time.Millisecond * time.Duration(DuraUpdate))
+				}
+				if DuraUpdate > 0 || (NeedUpdate&0x2) != 0 {
+					NeedUpdate &= 0xfd
+					if MainSpectr.Probe() {
+						spectr.QueueRedrawAll()
+					}
+				}
 			}
 		}
 	}()

@@ -17,10 +17,12 @@ type ItPot struct {
 	Data float64
 }
 
-const SOURCE_SERIAL = 0
-const SOURCE_MODEL = 1
+const SOURCE_NO = 0
+const SOURCE_SERIAL = 1
+const SOURCE_MODEL = 2
 
-var sourceDir = SOURCE_SERIAL
+var sourceDir = SOURCE_NO
+
 var sourceLength = 16394
 var sourceStart time.Time
 var sourceData []ItPot
@@ -42,9 +44,13 @@ func StartData() {
 			if pots != nil {
 				genAppendPot(pots)
 			}
-			time.Sleep(time.Microsecond * 1000)
+			time.Sleep(time.Microsecond * 100)
 		}
 	}()
+}
+
+func SetSource(source int) {
+	sourceDir = source
 }
 
 func GenReset() {
