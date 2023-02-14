@@ -8,16 +8,16 @@ type ItGraphic struct {
 	ItPlot
 }
 
-var MainGraphic ItGraphic
-
 func BuildGraphic() *ItGraphic {
-	MainGraphic.Loader = &MainGraphic
-	MainGraphic.IsZeroCenter = true
-	return &MainGraphic
+	graph := &ItGraphic{}
+	graph.Loader = graph
+	graph.IsZeroCenter = true
+	graph.Width, graph.Height = 1024, 512
+	return graph
 }
 
 func (it *ItGraphic) Probe() bool {
-	if dt := data.GetData(it.Sign); dt != nil {
+	if dt := data.GetData(it.Sign, 4096); dt != nil {
 		it.Load(dt)
 		return true
 	} else {

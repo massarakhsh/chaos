@@ -16,37 +16,37 @@ type ItSpectr struct {
 	history [MAX_HIST][MAX_WAVE]float64
 }
 
-var MainSpectr ItSpectr
-
 func BuildSpectr() *ItSpectr {
-	MainSpectr.Loader = &MainSpectr
-	MainGraphic.IsZeroMin = true
-	return &MainSpectr
+	graph := &ItSpectr{}
+	graph.Loader = graph
+	graph.IsZeroCenter = false
+	graph.Width, graph.Height = 512, 256
+	return graph
 }
 
 func (it *ItSpectr) Probe() bool {
-	if MainGraphic.Sign == it.Sign {
-		return false
-	} else if sign, data := it.loadData(); data == nil {
+	if sign, vals := it.loadData(); vals == nil {
 		return false
 	} else {
-		spectr := fft.FFTReal(data)
+		spectr := fft.FFTReal(vals)
 		it.storeData(sign, spectr)
 		return true
 	}
 }
 
 func (it *ItSpectr) loadData() (int, []float64) {
-	sign := MainGraphic.Sign
-	count := MainGraphic.Count
-	if count <= 0 {
+	if dt := data.GetData(it.Sign, 4096); dt == nil {
 		return 0, nil
+	} else if count := dt.Length; count == 0 {
+		return 0, nil
+	} else {
+		sign := dt.Sign
+		vals := make([]float64, count)
+		for n := 0; n < count; n++ {
+			vals[n] = dt.Data[n]
+		}
+		return sign, vals
 	}
-	info := make([]float64, count)
-	for n := 0; n < count; n++ {
-		info[n] = MainGraphic.List[n].YVal
-	}
-	return sign, info
 }
 
 func (it *ItSpectr) storeData(sign int, info []complex128) {

@@ -3,8 +3,6 @@ package front
 import (
 	"math"
 
-	"github.com/massarakhsh/chaos/data"
-
 	"github.com/andlabs/ui"
 )
 
@@ -12,25 +10,14 @@ const bd = 10
 
 //const radius = 5
 
-type ItLoad interface {
-	Probe() bool
+type ItPlot struct {
+	ItPanel
+	SP *ui.DrawStrokeParams
 }
 
-type ItPlot struct {
-	Sign          int
-	SP            *ui.DrawStrokeParams
-	Width, Height float64
-	Count         int
-	List          []ItPoint
-	XMin, XMax    float64
-	YMin, YMax    float64
-	XZero, YZero  float64
-	IsZeroCenter  bool
-	IsZeroMin     bool
-	XFirst, XStep float64
-	YFirst, YStep float64
-
-	Loader ItLoad
+type InfPlot interface {
+	ui.AreaHandler
+	Probe() bool
 }
 
 type ItPoint struct {
@@ -46,13 +33,6 @@ func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
 	it.drawAxes(p)
 	it.drawGraph(p)
 	it.drawPens(p)
-}
-
-func (it *ItPlot) resize(p *ui.AreaDrawParams) {
-	it.Width, it.Height = p.AreaWidth-2*bd, p.AreaHeight-2*bd
-	m := ui.DrawNewMatrix()
-	m.Translate(bd, bd)
-	p.Context.Transform(m)
 }
 
 func (it *ItPlot) clear(p *ui.AreaDrawParams) {
@@ -210,54 +190,4 @@ func (it *ItPlot) DragBroken(a *ui.Area) {
 func (it *ItPlot) KeyEvent(a *ui.Area, ke *ui.AreaKeyEvent) (handled bool) {
 	// reject all keys
 	return false
-}
-
-func (it *ItPlot) Load(serial *data.ItData) {
-	if serial == nil || serial.Length < 2 {
-		it.Count = 0
-		it.List = []ItPoint{}
-	} else {
-		length := serial.Length
-		it.Sign = serial.Sign
-		it.Count = length
-		it.List = make([]ItPoint, length)
-		it.XMin = serial.XMin
-		it.XMax = serial.XMax
-		if it.XMin >= it.XMax {
-			it.XMin -= 0.1
-			it.XMax += 0.1
-		}
-		for i := 0; i < length; i++ {
-			point := &it.List[i]
-			point.XVal = (serial.XMin*float64(length-1-i) + serial.XMax*float64(i)) / float64(length-1)
-			val := serial.Data[i]
-			point.YVal = val
-			if i == 0 || val < it.YMin {
-				it.YMin = val
-			}
-			if i == 0 || val > it.YMax {
-				it.YMax = val
-			}
-		}
-		if it.IsZeroCenter {
-			if it.YMin >= 0 {
-				it.YMin = -it.YMax
-			} else if it.YMax <= 0 {
-				it.YMax = -it.YMin
-			} else if it.YMin > -it.YMax {
-				it.YMin = -it.YMax
-			} else if it.YMax < -it.YMin {
-				it.YMax = -it.YMin
-			}
-		}
-		if it.IsZeroMin {
-			if it.YMin > 0 {
-				it.YMin = 0
-			}
-		}
-		if it.YMin >= it.YMax {
-			it.YMin -= 0.1
-			it.YMax += 0.1
-		}
-	}
 }

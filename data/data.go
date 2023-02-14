@@ -1,8 +1,11 @@
 package data
 
 import (
+	"fmt"
+	"os"
 	"sync"
 	"time"
+	//"github.com/gotk3/gotk3/gtk"
 )
 
 type ItData struct {
@@ -21,24 +24,25 @@ const SOURCE_NO = 0
 const SOURCE_SERIAL = 1
 const SOURCE_MODEL = 2
 
-var sourceDir = SOURCE_NO
+var dataSource = SOURCE_NO
 
-var sourceLength = 16394
-var sourceStart time.Time
-var sourceData []ItPot
-var sourcePos int
-var sourceSign int
-var sourceLock sync.Mutex
+var dataSpace = 1024 * 1024
+var dataStart time.Time
+var dataPots []ItPot
+var dataFrom int
+var dataTo int
+var dataSign int
+var dataLock sync.Mutex
 
 func StartData() {
-	sourceStart = time.Now()
+	dataStart = time.Now()
 	GenReset()
 	go func() {
 		for {
 			var pots []ItPot
-			if sourceDir == SOURCE_SERIAL {
+			if dataSource == SOURCE_SERIAL {
 				pots = genPotSerial()
-			} else if sourceDir == SOURCE_MODEL {
+			} else if dataSource == SOURCE_MODEL {
 				pots = genPotModel()
 			}
 			if pots != nil {
@@ -50,57 +54,87 @@ func StartData() {
 }
 
 func SetSource(source int) {
-	sourceDir = source
+	dataSource = source
 }
 
 func GenReset() {
-	sourceLock.Lock()
-	sourceData = make([]ItPot, sourceLength)
-	for old := 0; old < sourceLength; old++ {
-		at := sourceStart.Add(-time.Duration(old) * time.Microsecond * 100)
-		sourceData[sourceLength-1-old].At = at
-		sourceData[sourceLength-1-old].Data = 0
-	}
-	sourcePos = 0
-	sourceSign++
-	sourceLock.Unlock()
+	dataLock.Lock()
+	dataPots = make([]ItPot, dataSpace)
+	dataFrom = 0
+	dataTo = 0
+	dataSign++
+	dataLock.Unlock()
 }
 
 func genAppendPot(pots []ItPot) {
-	sourceLock.Lock()
+	dataLock.Lock()
 	for nr := 0; nr < len(pots); nr++ {
-		sourceData[sourcePos] = pots[nr]
-		sourcePos++
-		if sourcePos >= sourceLength {
-			sourcePos = 0
+		dataPots[dataTo] = pots[nr]
+		dataTo = nextSource(dataTo)
+		if dataTo == dataFrom {
+			dataFrom = nextSource(dataFrom)
 		}
 	}
-	sourceSign++
-	sourceLock.Unlock()
+	dataSign++
+	dataLock.Unlock()
 }
 
-func GetData(sign int) *ItData {
-	if sign == sourceSign {
+func nextSource(pos int) int {
+	if next := pos + 1; next < dataSpace {
+		return next
+	} else {
+		return 0
+	}
+}
+
+func SaveToFile() {
+	if dataTo != dataFrom {
+		filename := time.Now().Format("2006-01-02 15:04:05") + ".cha"
+		file, _ := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
+		if file != nil {
+			started := false
+			var startAt time.Time
+			to := dataTo
+			for pos := dataFrom; pos != to; pos = nextSource(pos) {
+				pot := dataPots[pos]
+				if !started {
+					startAt = pot.At
+					started = true
+				}
+				file.WriteString(fmt.Sprintf("%.6f,%.6f\n", pot.At.Sub(startAt).Seconds(), pot.Data))
+			}
+			file.Close()
+		}
+	}
+}
+
+func GetData(sign int, max int) *ItData {
+	if sign == dataSign {
 		return nil
 	}
-	sourceLock.Lock()
+	dataLock.Lock()
 	data := &ItData{}
-	data.Sign = sourceSign
-	data.Length = sourceLength
-	data.Data = make([]float64, sourceLength)
-	for to := 0; to < sourceLength; to++ {
-		from := sourcePos + to
-		if from >= sourceLength {
-			from -= sourceLength
-		}
-		data.Data[to] = sourceData[from].Data
-		if to == 0 {
-			data.XMin = sourceData[from].At.Sub(sourceStart).Seconds()
-		}
-		if to == sourceLength-1 {
-			data.XMax = sourceData[from].At.Sub(sourceStart).Seconds()
-		}
+	data.Sign = dataSign
+	from := dataFrom
+	length := dataTo - dataFrom
+	if length < 0 {
+		length += dataSpace
 	}
-	sourceLock.Unlock()
+	if length > max {
+		from += length - max
+		if from >= dataSpace {
+			from -= dataSpace
+		}
+		length = max
+	}
+	data.Length = length
+	data.Data = make([]float64, length)
+	data.XMin = dataPots[from].At.Sub(dataStart).Seconds()
+	for n := 0; n < length; n++ {
+		data.Data[n] = dataPots[from].Data
+		from = nextSource(from)
+	}
+	data.XMax = dataPots[from].At.Sub(dataStart).Seconds()
+	dataLock.Unlock()
 	return data
 }
