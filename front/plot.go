@@ -1,6 +1,7 @@
 package front
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/andlabs/ui"
@@ -111,10 +112,13 @@ func (it *ItPlot) findScale(min, max float64) (float64, float64) {
 
 func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
+		y := 0.0
 		for x := it.XFirst; x < it.XMax; x += it.XStep {
 			if xt := it.locFromX(x); xt >= 0 && xt < it.Width {
 				path.NewFigure(xt, 0)
 				path.LineTo(xt, it.Height)
+				it.drawText(p, fmt.Sprintf("%f", x), xt, y, 10, 0.99, 0, 0, 0.99)
+				y += 12
 			}
 		}
 		path.End()
@@ -132,6 +136,37 @@ func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 		p.Context.Stroke(path, brush, it.SP)
 		path.Free()
 	}
+}
+
+/*func (it *ItPlot) appendWithAttributes(what string, attrs ...ui.Attribute) {
+	start := len(attrstr.String())
+	end := start + len(what)
+	attrstr.AppendUnattributed(what)
+	for _, a := range attrs {
+		attrstr.SetAttribute(a, start, end)
+	}
+}*/
+
+func (it *ItPlot) drawText(p *ui.AreaDrawParams, text string, x, y float64, size float64, cr, cg, cb, ca float64) {
+	attrstr := ui.NewAttributedString(text)
+	sz := len(text)
+	attrstr.SetAttribute(ui.TextColor{cr, cg, cb, ca}, 0, sz)
+	df := ui.FontDescriptor{
+		Family:  "Courier New",
+		Size:    ui.TextSize(size),
+		Weight:  ui.TextWeightNormal,
+		Italic:  ui.TextItalicNormal,
+		Stretch: ui.TextStretchCondensed,
+	}
+	lp := ui.DrawTextLayoutParams{
+		String:      attrstr,
+		DefaultFont: &df,
+		Width:       it.Width - x,
+		Align:       ui.DrawTextAlignLeft,
+	}
+	tl := ui.DrawNewTextLayout(&lp)
+	p.Context.Text(tl, x, y)
+	tl.Free()
 }
 
 func (it *ItPlot) drawGraph(p *ui.AreaDrawParams) {

@@ -131,10 +131,10 @@ func GetData(sign int, max int) *ItData {
 	data.Data = make([]float64, length)
 	data.XMin = dataPots[from].At.Sub(dataStart).Seconds()
 	for n := 0; n < length; n++ {
+		data.XMax = dataPots[from].At.Sub(dataStart).Seconds()
 		data.Data[n] = dataPots[from].Data
 		from = nextSource(from)
 	}
-	data.XMax = dataPots[from].At.Sub(dataStart).Seconds()
 	dataLock.Unlock()
 	return data
 }
