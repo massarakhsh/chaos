@@ -10,6 +10,7 @@ type ItLoad interface {
 }
 
 type ItPanel struct {
+	Name          string
 	Sign          int
 	Width, Height float64
 	Count         int
@@ -20,7 +21,9 @@ type ItPanel struct {
 	IsZeroCenter  bool
 	IsZeroMin     bool
 	XFirst, XStep float64
+	Xfmt          string
 	YFirst, YStep float64
+	Yfmt          string
 
 	Loader ItLoad
 }

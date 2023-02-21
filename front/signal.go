@@ -5,14 +5,15 @@ import (
 )
 
 type ItSignal struct {
-	ItImage
+	ItPlot
 }
 
 func BuildSignal() *ItSignal {
 	graph := &ItSignal{}
+	graph.Name = "signal"
 	graph.Loader = graph
 	graph.IsZeroCenter = true
-	graph.Width, graph.Height = 1024, 512
+	graph.Width, graph.Height = 4096, 1024
 	return graph
 }
 

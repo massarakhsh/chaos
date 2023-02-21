@@ -28,6 +28,9 @@ type ItPoint struct {
 
 func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
 	//it.Loader.Probe()
+	if it.Name == "signal" {
+		it.Name += ""
+	}
 	it.resize(p)
 	it.clear(p)
 	it.calc(p)
@@ -71,8 +74,8 @@ func (it *ItPlot) calc(p *ui.AreaDrawParams) {
 			point.XLoc = it.locFromX(point.XVal)
 			point.YLoc = it.locFromY(point.YVal)
 		}
-		it.XFirst, it.XStep = it.findScale(it.XMin, it.XMax)
-		it.YFirst, it.YStep = it.findScale(it.YMin, it.YMax)
+		it.XFirst, it.XStep, it.Xfmt = it.findScale(it.XMin, it.XMax)
+		it.YFirst, it.YStep, it.Yfmt = it.findScale(it.YMin, it.YMax)
 	}
 }
 
@@ -92,22 +95,27 @@ func (it *ItPlot) locToY(y float64) float64 {
 	return (it.YMin*(y-0) + it.YMax*(it.Height-y)) / it.Height
 }
 
-func (it *ItPlot) findScale(min, max float64) (float64, float64) {
+func (it *ItPlot) findScale(min, max float64) (float64, float64, string) {
 	step := 1.0
+	dg := 0
 	for step*10 > max-min {
 		step /= 10
+		dg++
 	}
 	for step*100 < max-min {
 		step *= 10
+		if dg > 0 {
+			dg--
+		}
 	}
 	for step*20 < max-min {
 		step *= 2
 	}
-	first := math.Floor(min/step) - step
+	first := math.Floor(min/step)*step - step
 	for first < min {
 		first += step
 	}
-	return first, step
+	return first, step, fmt.Sprintf("%%.%df", dg)
 }
 
 func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
@@ -117,8 +125,7 @@ func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 			if xt := it.locFromX(x); xt >= 0 && xt < it.Width {
 				path.NewFigure(xt, 0)
 				path.LineTo(xt, it.Height)
-				it.drawText(p, fmt.Sprintf("%f", x), xt, y, 10, 0.99, 0, 0, 0.99)
-				y += 12
+				it.drawText(p, fmt.Sprintf(it.Xfmt, x), xt-16, y, 10, 0.99, 0, 0, 0.99)
 			}
 		}
 		path.End()
