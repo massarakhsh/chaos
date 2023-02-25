@@ -8,12 +8,13 @@ type ItGraphic struct {
 	ItPlot
 }
 
-func BuildGraphic() *ItGraphic {
-	graph := &ItGraphic{}
-	graph.Loader = graph
-	graph.IsZeroCenter = true
-	graph.Width, graph.Height = 1024, 512
-	return graph
+func BuildGraphic(front *ItFront) *ItGraphic {
+	it := &ItGraphic{}
+	it.Front = front
+	it.Loader = it
+	it.IsZeroCenter = true
+	it.Width, it.Height = 1024, 512
+	return it
 }
 
 func (it *ItGraphic) Probe() bool {

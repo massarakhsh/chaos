@@ -10,6 +10,7 @@ type ItLoad interface {
 }
 
 type ItPanel struct {
+	Front         *ItFront
 	Name          string
 	Sign          int
 	Width, Height float64

@@ -8,13 +8,14 @@ type ItSignal struct {
 	ItPlot
 }
 
-func BuildSignal() *ItSignal {
-	graph := &ItSignal{}
-	graph.Name = "signal"
-	graph.Loader = graph
-	graph.IsZeroCenter = true
-	graph.Width, graph.Height = 4096, 1024
-	return graph
+func BuildSignal(front *ItFront) *ItSignal {
+	it := &ItSignal{}
+	it.Front = front
+	it.Name = "signal"
+	it.Loader = it
+	it.IsZeroCenter = true
+	it.Width, it.Height = 4096, 1024
+	return it
 }
 
 func (it *ItSignal) Probe() bool {

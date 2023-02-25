@@ -11,6 +11,10 @@ var modStep = time.Microsecond * 100
 var freq1 = 300.0
 var freq2 = 511.0
 
+func modelClose() {
+	modInit = false
+}
+
 func genPotModel() []ItPot {
 	var pots []ItPot
 	now := time.Now()

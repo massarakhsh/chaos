@@ -20,17 +20,19 @@ type ItPot struct {
 	Data float64
 }
 
-const SOURCE_NO = 0
+const SOURCE_RESET = 0
 const SOURCE_SERIAL = 1
 const SOURCE_MODEL = 2
+const SOURCE_ANALIZE = 3
 
-var dataSource = SOURCE_NO
+var dataSource = SOURCE_RESET
 
 var dataSpace = 1024 * 1024
 var dataStart time.Time
 var dataPots []ItPot
 var dataFrom int
 var dataTo int
+var dataSize int
 var dataSign int
 var dataLock sync.Mutex
 
@@ -53,27 +55,46 @@ func StartData() {
 	}()
 }
 
+func GetSource() int {
+	return dataSource
+}
+
 func SetSource(source int) {
+	if source != SOURCE_ANALIZE {
+		GenReset()
+	}
 	dataSource = source
+}
+
+func GetDataSize() int {
+	return dataSize
 }
 
 func GenReset() {
 	dataLock.Lock()
+	if dataSource == SOURCE_SERIAL {
+		serialClose()
+	} else if dataSource == SOURCE_MODEL {
+		modelClose()
+	}
 	dataPots = make([]ItPot, dataSpace)
 	dataFrom = 0
 	dataTo = 0
+	dataSize = 0
 	dataSign++
 	dataLock.Unlock()
 }
 
 func genAppendPot(pots []ItPot) {
 	dataLock.Lock()
-	for nr := 0; nr < len(pots); nr++ {
-		dataPots[dataTo] = pots[nr]
-		dataTo = nextSource(dataTo)
-		if dataTo == dataFrom {
+	for _, pot := range pots {
+		if dataSize == dataSpace {
 			dataFrom = nextSource(dataFrom)
+			dataSize--
 		}
+		dataPots[dataTo] = pot
+		dataTo = nextSource(dataTo)
+		dataSize++
 	}
 	dataSign++
 	dataLock.Unlock()
@@ -88,14 +109,13 @@ func nextSource(pos int) int {
 }
 
 func SaveToFile() {
-	if dataTo != dataFrom {
+	if dataSize > 0 {
 		filename := time.Now().Format("2006-01-02 15:04:05") + ".cha"
 		file, _ := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 		if file != nil {
 			started := false
 			var startAt time.Time
-			to := dataTo
-			for pos := dataFrom; pos != to; pos = nextSource(pos) {
+			for pos, size := dataFrom, dataSize; size > 0; pos, size = nextSource(pos), size-1 {
 				pot := dataPots[pos]
 				if !started {
 					startAt = pot.At
@@ -116,10 +136,7 @@ func GetData(sign int, max int) *ItData {
 	data := &ItData{}
 	data.Sign = dataSign
 	from := dataFrom
-	length := dataTo - dataFrom
-	if length < 0 {
-		length += dataSpace
-	}
+	length := dataSize
 	if length > max {
 		from += length - max
 		if from >= dataSpace {

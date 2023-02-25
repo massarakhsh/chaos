@@ -8,95 +8,56 @@ import (
 	_ "github.com/andlabs/ui/winmanifest"
 )
 
-type ItWindow struct {
-	Controls *ItControls
+type ItFront struct {
+	MainWindow   *ui.Window
+	MainBox      *ui.Box
+	ControlBox   *ui.Box
+	ListControls []ItControl
+
+	InfoBox   *ui.Box
+	InfoArea  *ui.Area
+	RowBox    *ui.Box
+	ListAreas []*ui.Area
 }
 
 var DuraUpdate = 1000
 var NeedUpdate = 0x3
 
 func MainStart() {
-	it := &ItWindow{}
+	it := &ItFront{}
 	ui.Main(it.mainStart)
 }
 
-func (it *ItWindow) mainStart() {
+func (it *ItFront) mainStart() {
 	rand.Seed(time.Now().Unix())
-	mainwin := ui.NewWindow("ХАОС. Обработка временных серий", 800, 600, true)
-
-	mainwin.SetMargined(true)
-	mainwin.OnClosing(func(*ui.Window) bool {
-		mainwin.Destroy()
+	it.MainWindow = ui.NewWindow("ХАОС. Обработка временных серий", 800, 600, true)
+	it.MainWindow.SetMargined(true)
+	it.MainWindow.OnClosing(func(*ui.Window) bool {
+		it.MainWindow.Destroy()
 		ui.Quit()
 		return false
 	})
 	ui.OnShouldQuit(func() bool {
-		mainwin.Destroy()
+		it.MainWindow.Destroy()
 		return true
 	})
 
-	if mainBox := it.buildMainBox(); mainBox != nil {
-		mainwin.SetChild(mainBox)
-	}
+	it.buildMainBox()
+	it.addControlMode()
 
-	mainwin.Show()
+	it.MainWindow.Show()
 }
 
-func (it *ItWindow) buildMainBox() *ui.Box {
-	box := ui.NewHorizontalBox()
-	box.SetPadded(true)
-	if controlBox := it.buildControlBox(); controlBox != nil {
-		box.Append(controlBox, false)
-	}
-	if infoBox := it.buildInfoBox(); infoBox != nil {
-		box.Append(infoBox, true)
-	}
-	return box
-}
+func (it *ItFront) buildMainBox() {
+	it.MainBox = ui.NewHorizontalBox()
+	it.MainBox.SetPadded(true)
+	it.MainWindow.SetChild(it.MainBox)
 
-func (it *ItWindow) buildControlBox() *ui.Box {
-	box := ui.NewVerticalBox()
-	box.SetPadded(true)
-	it.Controls = BuildControls(box)
-	return box
-}
+	it.ControlBox = ui.NewVerticalBox()
+	it.ControlBox.SetPadded(true)
+	it.MainBox.Append(it.ControlBox, false)
 
-func (it *ItWindow) buildInfoBox() *ui.Box {
-	box := ui.NewVerticalBox()
-	box.SetPadded(true)
-	if elm := it.buildPlotArea(BuildGraphic()); elm != nil {
-		box.Append(elm, true)
-	}
-	if row := ui.NewHorizontalBox(); row != nil {
-		box.Append(row, true)
-		if elm := it.buildPlotArea(BuildSignal()); elm != nil {
-			row.Append(elm, true)
-		}
-		if elm := it.buildPlotArea(BuildSpectr()); elm != nil {
-			row.Append(elm, true)
-		}
-	}
-	return box
-}
-
-func (it *ItWindow) buildPlotArea(plot InfPlot) *ui.Area {
-	area := ui.NewArea(plot)
-	go func() {
-		nexttime := time.Now()
-		for {
-			time.Sleep(time.Millisecond * 10)
-			if time.Now().After(nexttime) {
-				if DuraUpdate > 0 {
-					nexttime = time.Now().Add(time.Millisecond * time.Duration(DuraUpdate))
-				}
-				if DuraUpdate > 0 || (NeedUpdate&0x1) != 0 {
-					NeedUpdate &= 0xfe
-					if plot.Probe() {
-						area.QueueRedrawAll()
-					}
-				}
-			}
-		}
-	}()
-	return area
+	it.InfoBox = ui.NewVerticalBox()
+	it.InfoBox.SetPadded(true)
+	it.MainBox.Append(it.InfoBox, true)
 }

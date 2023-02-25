@@ -16,13 +16,14 @@ type ItSpectr struct {
 	history [MAX_HIST][MAX_WAVE]float64
 }
 
-func BuildSpectr() *ItSpectr {
-	graph := &ItSpectr{}
-	graph.Name = "spectr"
-	graph.Loader = graph
-	graph.IsZeroCenter = false
-	graph.Width, graph.Height = 512, 256
-	return graph
+func BuildSpectr(front *ItFront) *ItSpectr {
+	it := &ItSpectr{}
+	it.Front = front
+	it.Name = "spectr"
+	it.Loader = it
+	it.IsZeroCenter = false
+	it.Width, it.Height = 512, 256
+	return it
 }
 
 func (it *ItSpectr) Probe() bool {

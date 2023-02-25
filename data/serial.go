@@ -13,6 +13,7 @@ var SConf *serial.Config
 var SPort *serial.Port
 
 func serialInit() bool {
+	serialClose()
 	for ns := 7; ns >= 0; ns-- {
 		var dev string
 		if os := runtime.GOOS; os == "linux" {
@@ -29,6 +30,15 @@ func serialInit() bool {
 		}
 	}
 	return false
+}
+
+func serialClose() {
+	if SPort != nil {
+		SPort.Close()
+		SPort = nil
+		fmt.Printf("Closed serial port %s\n", SConf.Name)
+	}
+	SConf = nil
 }
 
 func genPotSerial() []ItPot {

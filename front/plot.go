@@ -87,13 +87,12 @@ func (it *ItPlot) locFromY(y float64) float64 {
 	return (0*(y-it.YMin) + it.Height*(it.YMax-y)) / (it.YMax - it.YMin)
 }
 
-func (it *ItPlot) locToX(x float64) float64 {
-	return (it.XMin*(it.Width-x) + it.XMax*(x-0)) / it.Width
-}
-
-func (it *ItPlot) locToY(y float64) float64 {
-	return (it.YMin*(y-0) + it.YMax*(it.Height-y)) / it.Height
-}
+// func (it *ItPlot) locToX(x float64) float64 {
+// 	return (it.XMin*(it.Width-x) + it.XMax*(x-0)) / it.Width
+// }
+// func (it *ItPlot) locToY(y float64) float64 {
+// 	return (it.YMin*(y-0) + it.YMax*(it.Height-y)) / it.Height
+// }
 
 func (it *ItPlot) findScale(min, max float64) (float64, float64, string) {
 	step := 1.0
@@ -157,7 +156,7 @@ func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 func (it *ItPlot) drawText(p *ui.AreaDrawParams, text string, x, y float64, size float64, cr, cg, cb, ca float64) {
 	attrstr := ui.NewAttributedString(text)
 	sz := len(text)
-	attrstr.SetAttribute(ui.TextColor{cr, cg, cb, ca}, 0, sz)
+	attrstr.SetAttribute(ui.TextColor{R: cr, G: cg, B: cb, A: ca}, 0, sz)
 	df := ui.FontDescriptor{
 		Family:  "Courier New",
 		Size:    ui.TextSize(size),
