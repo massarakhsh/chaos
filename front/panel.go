@@ -5,7 +5,7 @@ import (
 	"github.com/massarakhsh/chaos/data"
 )
 
-type ItLoad interface {
+type ItFLoad interface {
 	Probe() bool
 }
 
@@ -26,7 +26,7 @@ type ItPanel struct {
 	YFirst, YStep float64
 	Yfmt          string
 
-	Loader ItLoad
+	Loader ItFLoad
 }
 
 func (it *ItPanel) Load(serial *data.ItData) {

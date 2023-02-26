@@ -6,58 +6,63 @@ import (
 
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
+	"github.com/massarakhsh/chaos/pkg/zone"
 )
 
 type ItFront struct {
-	MainWindow   *ui.Window
-	MainBox      *ui.Box
-	ControlBox   *ui.Box
-	ListControls []ItControl
-
-	InfoBox   *ui.Box
-	InfoArea  *ui.Area
-	RowBox    *ui.Box
-	ListAreas []*ui.Area
+	zone.ItZone
 }
 
 var DuraUpdate = 1000
-var NeedUpdate = 0x3
+var ViewSign = 0
+var IsTerminating bool
 
 func MainStart() {
 	it := &ItFront{}
+	go it.run()
 	ui.Main(it.mainStart)
 }
 
 func (it *ItFront) mainStart() {
 	rand.Seed(time.Now().Unix())
-	it.MainWindow = ui.NewWindow("ХАОС. Обработка временных серий", 800, 600, true)
-	it.MainWindow.SetMargined(true)
-	it.MainWindow.OnClosing(func(*ui.Window) bool {
-		it.MainWindow.Destroy()
-		ui.Quit()
-		return false
-	})
-	ui.OnShouldQuit(func() bool {
-		it.MainWindow.Destroy()
-		return true
-	})
+	if mainWindow := ui.NewWindow("ХАОС. Обработка временных серий", 1280, 800, true); mainWindow != nil {
+		mainWindow.SetMargined(true)
+		mainWindow.OnClosing(func(*ui.Window) bool {
+			mainWindow.Destroy()
+			ui.Quit()
+			IsTerminating = true
+			return false
+		})
+		it.BindHorizontalBox(it)
+		mainWindow.SetChild(it.GetControl())
+		it.buildMain()
 
-	it.buildMainBox()
-	it.addControlMode()
-
-	it.MainWindow.Show()
+		mainWindow.Show()
+	}
 }
 
-func (it *ItFront) buildMainBox() {
-	it.MainBox = ui.NewHorizontalBox()
-	it.MainBox.SetPadded(true)
-	it.MainWindow.SetChild(it.MainBox)
+func (it *ItFront) run() {
+	time.Sleep(time.Second * 1)
+	for !IsTerminating {
+		time.Sleep(time.Millisecond * 10)
+		it.Step()
+	}
+}
 
-	it.ControlBox = ui.NewVerticalBox()
-	it.ControlBox.SetPadded(true)
-	it.MainBox.Append(it.ControlBox, false)
-
-	it.InfoBox = ui.NewVerticalBox()
-	it.InfoBox.SetPadded(true)
-	it.MainBox.Append(it.InfoBox, true)
+func (it *ItFront) buildMain() {
+	if left := zone.BuildVerticalBox(nil); left != nil {
+		it.Append(left, false)
+		if child := buildControl(); child != nil {
+			left.Append(child, true)
+		}
+		if child := buildFile(); child != nil {
+			left.Append(child, false)
+		}
+	}
+	if right := zone.BuildVerticalBox(nil); right != nil {
+		it.Append(right, true)
+		if child := buildInfo(); child != nil {
+			right.Append(child, true)
+		}
+	}
 }

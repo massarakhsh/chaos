@@ -48,10 +48,6 @@ func genPotSerial() []ItPot {
 	}
 	if serInit {
 		buf := make([]byte, 1)
-		/*for nb := 0; nb < 100; nb++ {
-			buf[0] = byte(nb)
-			SPort.Write(buf)
-		}*/
 		for nn := 0; nn < 256; nn++ {
 			if sbuf, err := SPort.Read(buf); err != nil || sbuf == 0 {
 				break

@@ -27,7 +27,7 @@ const SOURCE_ANALIZE = 3
 
 var dataSource = SOURCE_RESET
 
-var dataSpace = 1024 * 1024
+var dataSpace = 1000000
 var dataStart time.Time
 var dataPots []ItPot
 var dataFrom int

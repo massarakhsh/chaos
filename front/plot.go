@@ -3,6 +3,7 @@ package front
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/andlabs/ui"
 )
@@ -13,12 +14,9 @@ const bd = 10
 
 type ItPlot struct {
 	ItPanel
-	SP *ui.DrawStrokeParams
-}
-
-type InfPlot interface {
-	ui.AreaHandler
-	Probe() bool
+	SP         *ui.DrawStrokeParams
+	area       *ui.Area
+	lastUpdate time.Time
 }
 
 type ItPoint struct {
@@ -231,4 +229,17 @@ func (it *ItPlot) DragBroken(a *ui.Area) {
 func (it *ItPlot) KeyEvent(a *ui.Area, ke *ui.AreaKeyEvent) (handled bool) {
 	// reject all keys
 	return false
+}
+
+func mkSolidBrush(color uint32, alpha float64) *ui.DrawBrush {
+	brush := new(ui.DrawBrush)
+	brush.Type = ui.DrawBrushTypeSolid
+	component := uint8((color >> 16) & 0xFF)
+	brush.R = float64(component) / 255
+	component = uint8((color >> 8) & 0xFF)
+	brush.G = float64(component) / 255
+	component = uint8(color & 0xFF)
+	brush.B = float64(component) / 255
+	brush.A = alpha
+	return brush
 }
