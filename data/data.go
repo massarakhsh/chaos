@@ -110,9 +110,11 @@ func nextSource(pos int) int {
 
 func SaveToFile() {
 	if dataSize > 0 {
-		filename := time.Now().Format("2006-01-02 15:04:05") + ".cha"
-		file, _ := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
-		if file != nil {
+		filename := time.Now().Format("2006-01-02-15-04-05.cha")
+		file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0666)
+		if err != nil {
+			fmt.Println(err)
+		} else {
 			started := false
 			var startAt time.Time
 			for pos, size := dataFrom, dataSize; size > 0; pos, size = nextSource(pos), size-1 {
