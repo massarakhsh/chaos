@@ -1,12 +1,25 @@
 package front
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/andlabs/ui"
 	"github.com/massarakhsh/chaos/data"
 )
 
 type ItFLoad interface {
 	Probe() bool
+}
+
+type ItAxis struct {
+	Min, Max float64
+	LocDep   float64
+	LocSize  float64
+	LocZero  float64
+
+	Format      string
+	First, Step float64
 }
 
 type ItPanel struct {
@@ -16,18 +29,67 @@ type ItPanel struct {
 	Width, Height float64
 	Count         int
 	List          []ItPoint
-	XMin, XMax    float64
-	YMin, YMax    float64
-	XZero, YZero  float64
 	IsZeroCenter  bool
 	IsZeroMin     bool
-	XFirst, XStep float64
-	Xfmt          string
-	YFirst, YStep float64
-	Yfmt          string
+
+	X ItAxis
+	Y ItAxis
+
+	CropFrom float64
+	CropTo   float64
 
 	Loader ItFLoad
 }
+
+func (it *ItAxis) Calibrate(dep float64, size float64) {
+	it.LocDep = dep
+	it.LocSize = size
+	if it.Max <= it.Min {
+		it.LocZero = it.ToLoc(0)
+		step := 1.0
+		dg := 0
+		for step*10 > it.Max-it.Min {
+			step /= 10
+			dg++
+		}
+		for step*100 < it.Max-it.Min {
+			step *= 10
+			if dg > 0 {
+				dg--
+			}
+		}
+		for step*20 < it.Max-it.Min {
+			step *= 2
+		}
+		first := math.Floor(it.Min/step)*step - step
+		for first < it.Min {
+			first += step
+		}
+		it.First = first
+		it.Step = step
+		it.Format = fmt.Sprintf("%%.%df", dg)
+	}
+}
+
+func (it *ItAxis) ToLoc(v float64) float64 {
+	if it.Max <= it.Min {
+		return 0
+	}
+	loc := (0*(it.Max-v) + it.LocSize*(v-it.Min)) / (it.Max - it.Min)
+	if loc < 0 {
+		loc = 0
+	} else if loc > it.LocSize {
+		loc = it.LocSize
+	}
+	return it.LocDep + loc
+}
+
+// func (it *ItPlot) locToX(x float64) float64 {
+// 	return (it.XMin*(it.Width-x) + it.XMax*(x-0)) / it.Width
+// }
+// func (it *ItPlot) locToY(y float64) float64 {
+// 	return (it.YMin*(y-0) + it.YMax*(it.Height-y)) / it.Height
+// }
 
 func (it *ItPanel) Load(serial *data.ItData) {
 	if serial == nil {
@@ -42,43 +104,44 @@ func (it *ItPanel) Load(serial *data.ItData) {
 		it.Sign = serial.Sign
 		it.Count = length
 		it.List = make([]ItPoint, length)
-		it.XMin = serial.XMin
-		it.XMax = serial.XMax
-		if it.XMin >= it.XMax {
-			it.XMin -= 0.1
-			it.XMax += 0.1
+		it.X = ItAxis{Min: serial.XMin, Max: serial.XMax}
+		it.Y = ItAxis{}
+		if it.X.Min >= it.X.Max {
+			mid := (it.X.Min + it.X.Max) / 2
+			it.X.Min = mid - 0.1
+			it.X.Max = mid + 0.1
 		}
 		for i := 0; i < length; i++ {
 			point := &it.List[i]
 			point.XVal = (serial.XMin*float64(length-1-i) + serial.XMax*float64(i)) / float64(length-1)
 			val := serial.Data[i]
 			point.YVal = val
-			if i == 0 || val < it.YMin {
-				it.YMin = val
+			if i == 0 || val < it.Y.Min {
+				it.Y.Min = val
 			}
-			if i == 0 || val > it.YMax {
-				it.YMax = val
+			if i == 0 || val > it.Y.Max {
+				it.Y.Max = val
 			}
 		}
+		if it.Y.Min >= it.Y.Max {
+			it.Y.Min -= 0.1
+			it.Y.Max += 0.1
+		}
 		if it.IsZeroCenter {
-			if it.YMin >= 0 {
-				it.YMin = -it.YMax
-			} else if it.YMax <= 0 {
-				it.YMax = -it.YMin
-			} else if it.YMin > -it.YMax {
-				it.YMin = -it.YMax
-			} else if it.YMax < -it.YMin {
-				it.YMax = -it.YMin
+			if it.Y.Min >= 0 {
+				it.Y.Min = -it.Y.Max
+			} else if it.Y.Max <= 0 {
+				it.Y.Max = -it.Y.Min
+			} else if it.Y.Min > -it.Y.Max {
+				it.Y.Min = -it.Y.Max
+			} else if it.Y.Max < -it.Y.Min {
+				it.Y.Max = -it.Y.Min
 			}
 		}
 		if it.IsZeroMin {
-			if it.YMin > 0 {
-				it.YMin = 0
+			if it.Y.Min > 0 {
+				it.Y.Min = 0
 			}
-		}
-		if it.YMin >= it.YMax {
-			it.YMin -= 0.1
-			it.YMax += 0.1
 		}
 	}
 }

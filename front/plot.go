@@ -2,7 +2,6 @@ package front
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/andlabs/ui"
@@ -46,83 +45,33 @@ func (it *ItPlot) clear(p *ui.AreaDrawParams) {
 	}
 	brush := mkSolidBrush(0xffffff, 1.0)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	path.AddRectangle(-bd, -bd, it.Width+2*bd, it.Height+2*bd)
+	path.AddRectangle(0, 0, it.Width, it.Height)
 	path.End()
 	p.Context.Fill(path, brush)
 	path.Free()
 }
 
 func (it *ItPlot) calc(p *ui.AreaDrawParams) {
-	it.XZero, it.YZero = 0, it.Height
+	it.X.Calibrate(bd, it.Width-2*bd)
+	it.Y.Calibrate(bd, it.Height-2*bd)
+	it.X.LocZero = it.X.LocDep
+	it.Y.LocZero = it.Y.LocDep + it.Y.LocSize
 	if length := it.Count; length >= 2 {
-		it.XZero = it.locFromX(0)
-		if it.XZero < 0 {
-			it.XZero = 0
-		} else if it.XZero > it.Width {
-			it.XZero = it.Width
-		}
-		it.YZero = it.locFromY(0)
-		if it.YZero < 0 {
-			it.YZero = 0
-		} else if it.YZero > it.Height {
-			it.YZero = it.Height
-		}
 		for i := 0; i < length; i++ {
 			point := &it.List[i]
-			point.XLoc = it.locFromX(point.XVal)
-			point.YLoc = it.locFromY(point.YVal)
-		}
-		it.XFirst, it.XStep, it.Xfmt = it.findScale(it.XMin, it.XMax)
-		it.YFirst, it.YStep, it.Yfmt = it.findScale(it.YMin, it.YMax)
-	}
-}
-
-func (it *ItPlot) locFromX(x float64) float64 {
-	return (0*(it.XMax-x) + it.Width*(x-it.XMin)) / (it.XMax - it.XMin)
-}
-
-func (it *ItPlot) locFromY(y float64) float64 {
-	return (0*(y-it.YMin) + it.Height*(it.YMax-y)) / (it.YMax - it.YMin)
-}
-
-// func (it *ItPlot) locToX(x float64) float64 {
-// 	return (it.XMin*(it.Width-x) + it.XMax*(x-0)) / it.Width
-// }
-// func (it *ItPlot) locToY(y float64) float64 {
-// 	return (it.YMin*(y-0) + it.YMax*(it.Height-y)) / it.Height
-// }
-
-func (it *ItPlot) findScale(min, max float64) (float64, float64, string) {
-	step := 1.0
-	dg := 0
-	for step*10 > max-min {
-		step /= 10
-		dg++
-	}
-	for step*100 < max-min {
-		step *= 10
-		if dg > 0 {
-			dg--
+			point.XLoc = it.X.ToLoc(point.XVal)
+			point.YLoc = it.Y.ToLoc(point.YVal)
 		}
 	}
-	for step*20 < max-min {
-		step *= 2
-	}
-	first := math.Floor(min/step)*step - step
-	for first < min {
-		first += step
-	}
-	return first, step, fmt.Sprintf("%%.%df", dg)
 }
 
 func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
-		y := 0.0
-		for x := it.XFirst; x < it.XMax; x += it.XStep {
-			if xt := it.locFromX(x); xt >= 0 && xt < it.Width {
-				path.NewFigure(xt, 0)
-				path.LineTo(xt, it.Height)
-				it.drawText(p, fmt.Sprintf(it.Xfmt, x), xt-16, y, 10, 0.99, 0, 0, 0.99)
+		for x := it.X.First; x < it.X.Max; x += it.X.Step {
+			if xt := it.X.ToLoc(x); xt >= 0 && xt < it.Width {
+				path.NewFigure(it.X.LocDep+xt, it.X.LocDep+it.Y.LocSize)
+				path.LineTo(it.X.LocDep+xt, it.X.LocDep)
+				it.drawText(p, fmt.Sprintf(it.X.Format, x), it.X.LocDep+xt-16, it.Y.LocDep+it.Y.LocSize-10, 10, 0.99, 0, 0, 0.99)
 			}
 		}
 		path.End()
@@ -131,25 +80,16 @@ func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 		path.Free()
 	}
 	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
-		path.NewFigure(it.XZero, 0)
-		path.LineTo(it.XZero, it.Height)
-		path.NewFigure(0, it.YZero)
-		path.LineTo(it.Width, it.YZero)
+		path.NewFigure(it.X.LocZero, it.Y.LocDep+it.Y.LocSize)
+		path.LineTo(it.X.LocZero, it.Y.LocDep)
+		path.NewFigure(it.X.LocDep, it.Y.LocSize-it.Y.LocZero)
+		path.LineTo(it.X.LocDep+it.X.LocSize, bd+it.Y.LocSize-it.Y.LocZero)
 		path.End()
 		brush := mkSolidBrush(0x000000, 1.0)
 		p.Context.Stroke(path, brush, it.SP)
 		path.Free()
 	}
 }
-
-/*func (it *ItPlot) appendWithAttributes(what string, attrs ...ui.Attribute) {
-	start := len(attrstr.String())
-	end := start + len(what)
-	attrstr.AppendUnattributed(what)
-	for _, a := range attrs {
-		attrstr.SetAttribute(a, start, end)
-	}
-}*/
 
 func (it *ItPlot) drawText(p *ui.AreaDrawParams, text string, x, y float64, size float64, cr, cg, cb, ca float64) {
 	attrstr := ui.NewAttributedString(text)

@@ -42,7 +42,7 @@ func (it *ItSpectr) Refresh() {
 }
 
 func (it *ItSpectr) Probe() bool {
-	if dt := data.GetData(it.Sign, 65536); dt == nil || dt.Length < 2 {
+	if dt := data.GetData(it.Sign, 0, 65536); dt == nil || dt.Length < 2 {
 		return false
 	} else {
 		sign := dt.Sign

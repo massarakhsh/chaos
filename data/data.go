@@ -1,6 +1,7 @@
 package data
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"sync"
@@ -23,7 +24,8 @@ type ItPot struct {
 const SOURCE_RESET = 0
 const SOURCE_SERIAL = 1
 const SOURCE_MODEL = 2
-const SOURCE_ANALIZE = 3
+const SOURCE_FILE = 3
+const SOURCE_ANALIZE = 4
 
 var dataSource = SOURCE_RESET
 
@@ -72,6 +74,11 @@ func GetDataSize() int {
 
 func GenReset() {
 	dataLock.Lock()
+	genReset()
+	dataLock.Unlock()
+}
+
+func genReset() {
 	if dataSource == SOURCE_SERIAL {
 		serialClose()
 	} else if dataSource == SOURCE_MODEL {
@@ -82,22 +89,25 @@ func GenReset() {
 	dataTo = 0
 	dataSize = 0
 	dataSign++
-	dataLock.Unlock()
 }
 
 func genAppendPot(pots []ItPot) {
 	dataLock.Lock()
 	for _, pot := range pots {
-		if dataSize == dataSpace {
-			dataFrom = nextSource(dataFrom)
-			dataSize--
-		}
-		dataPots[dataTo] = pot
-		dataTo = nextSource(dataTo)
-		dataSize++
+		pushPot(pot)
 	}
 	dataSign++
 	dataLock.Unlock()
+}
+
+func pushPot(pot ItPot) {
+	if dataSize == dataSpace {
+		dataFrom = nextSource(dataFrom)
+		dataSize--
+	}
+	dataPots[dataTo] = pot
+	dataTo = nextSource(dataTo)
+	dataSize++
 }
 
 func nextSource(pos int) int {
@@ -128,7 +138,7 @@ func SaveToFile() {
 	}
 }
 
-func GetData(sign int, max int) *ItData {
+func GetData(sign int, first int, count int) *ItData {
 	if sign == dataSign {
 		return nil
 	}
@@ -137,12 +147,21 @@ func GetData(sign int, max int) *ItData {
 	data.Sign = dataSign
 	from := dataFrom
 	length := dataSize
-	if length > max {
-		from += length - max
+	if first > length {
+		length = 0
+	} else if first > 0 {
+		length -= first
+		from += first
 		if from >= dataSpace {
 			from -= dataSpace
 		}
-		length = max
+	}
+	if length > count {
+		from += length - count
+		if from >= dataSpace {
+			from -= dataSpace
+		}
+		length = count
 	}
 	data.Length = length
 	data.Data = make([]float64, length)
@@ -154,4 +173,25 @@ func GetData(sign int, max int) *ItData {
 	}
 	dataLock.Unlock()
 	return data
+}
+
+func ReadFromFile() {
+	dataLock.Lock()
+	genReset()
+	filename := "data.cha"
+	if file, err := os.Open(filename); err == nil {
+		now := time.Now()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			var at, dt float64
+			if no, err := fmt.Sscanf(scanner.Text(), "%f,%f", &at, &dt); no == 2 && err == nil {
+				mcs := int64(at * 1000000)
+				pot := ItPot{At: now.Add(time.Microsecond * time.Duration(mcs)), Data: dt}
+				pushPot(pot)
+			}
+		}
+		file.Close()
+	}
+	dataSign++
+	dataLock.Unlock()
 }
