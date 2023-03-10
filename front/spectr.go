@@ -12,13 +12,11 @@ import (
 )
 
 const MAX_WAVE = 1024
-const MAX_HIST = 16
 
 type ItSpectr struct {
 	zone.ItZone
 	ItPlot
 	viewSign int
-	history  [MAX_HIST][MAX_WAVE]float64
 }
 
 func BuildSpectr() *ItSpectr {
@@ -58,9 +56,6 @@ func (it *ItSpectr) Probe() bool {
 }
 
 func (it *ItSpectr) storeData(sign int, step float64, info []complex128) {
-	for h := 0; h+1 < MAX_HIST; h++ {
-		it.history[h] = it.history[h+1]
-	}
 	dia := len(info)
 	zone := float64(dia) * step
 	serial := &data.ItData{}
@@ -81,14 +76,7 @@ func (it *ItSpectr) storeData(sign int, step float64, info []complex128) {
 				ampl = left*(rfrq+1-frq) + right*(frq-rfrq)
 			}
 		}
-		it.history[MAX_HIST-1][n] = ampl
-	}
-	for n := 0; n < MAX_WAVE; n++ {
-		ampl := 0.0
-		for h := 0; h < MAX_HIST; h++ {
-			ampl += it.history[h][n]
-		}
-		serial.Data[n] = ampl / MAX_HIST
+		serial.Data[n] = ampl
 	}
 	it.Load(serial)
 }
