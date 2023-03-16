@@ -50,7 +50,6 @@ func (it *ItControl) setMode(level int, sel int) {
 	} else {
 		data.SetSource(data.SOURCE_RESET)
 	}
-	it.addTemp()
 }
 
 func (it *ItControl) setModeAnalize() {
