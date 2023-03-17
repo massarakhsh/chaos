@@ -44,7 +44,7 @@ func (it *ItFront) mainStart() {
 func (it *ItFront) run() {
 	time.Sleep(time.Second * 1)
 	for !IsTerminating {
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(time.Millisecond * 1000)
 		it.Step()
 	}
 }

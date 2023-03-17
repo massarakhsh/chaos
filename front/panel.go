@@ -17,6 +17,7 @@ type ItAxis struct {
 	LocDep   float64
 	LocSize  float64
 	LocZero  float64
+	Acc      bool
 
 	Format      string
 	First, Step float64
@@ -41,11 +42,16 @@ type ItPanel struct {
 	Loader ItFLoad
 }
 
-func (it *ItAxis) Calibrate(dep float64, size float64) {
+func (it *ItAxis) Calibrate(dep float64, size float64, acc bool) {
 	it.LocDep = dep
 	it.LocSize = size
+	it.Acc = acc
+	it.LocZero = it.ToLoc(0)
 	if it.Max <= it.Min {
-		it.LocZero = it.ToLoc(0)
+		it.First = it.Min
+		it.Step = 1.0
+		it.Format = "%f"
+	} else {
 		step := 1.0
 		dg := 0
 		for step*10 > it.Max-it.Min {
@@ -78,8 +84,11 @@ func (it *ItAxis) ToLoc(v float64) float64 {
 	loc := (0*(it.Max-v) + it.LocSize*(v-it.Min)) / (it.Max - it.Min)
 	if loc < 0 {
 		loc = 0
-	} else if loc > it.LocSize {
-		loc = it.LocSize
+	} else if loc > it.LocSize-1 {
+		loc = it.LocSize - 1
+	}
+	if !it.Acc {
+		loc = it.LocSize - 1 - loc
 	}
 	return it.LocDep + loc
 }

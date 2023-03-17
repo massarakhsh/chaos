@@ -52,10 +52,10 @@ func (it *ItPlot) clear(p *ui.AreaDrawParams) {
 }
 
 func (it *ItPlot) calc(p *ui.AreaDrawParams) {
-	it.X.Calibrate(bd, it.Width-2*bd)
-	it.Y.Calibrate(bd, it.Height-2*bd)
+	it.X.Calibrate(bd, it.Width-2*bd, true)
+	it.Y.Calibrate(bd, it.Height-2*bd, false)
 	it.X.LocZero = it.X.LocDep
-	it.Y.LocZero = it.Y.LocDep + it.Y.LocSize
+	it.Y.LocZero = it.Y.LocDep
 	if length := it.Count; length >= 2 {
 		for i := 0; i < length; i++ {
 			point := &it.List[i]
@@ -82,7 +82,7 @@ func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
 		path.NewFigure(it.X.LocZero, it.Y.LocDep+it.Y.LocSize)
 		path.LineTo(it.X.LocZero, it.Y.LocDep)
-		path.NewFigure(it.X.LocDep, it.Y.LocSize-it.Y.LocZero)
+		path.NewFigure(it.X.LocDep, bd+it.Y.LocSize-it.Y.LocZero)
 		path.LineTo(it.X.LocDep+it.X.LocSize, bd+it.Y.LocSize-it.Y.LocZero)
 		path.End()
 		brush := mkSolidBrush(0x000000, 1.0)
