@@ -5,20 +5,20 @@ import (
 )
 
 type ItZone struct {
-	self     ItfZone
+	self     IfZone
 	refresh  ItfRefresh
 	box      *ui.Box
 	ctrl     ui.Control
-	listZone []ItfZone
+	listZone []IfZone
 }
 
-type ItfZone interface {
-	BindHorizontalBox(self ItfZone)
-	BindVerticalBox(self ItfZone)
-	BindControl(self ItfZone, ctrl ui.Control)
+type IfZone interface {
+	BindHorizontalBox(self IfZone)
+	BindVerticalBox(self IfZone)
+	BindControl(self IfZone, ctrl ui.Control)
 	BindRefresh(refresh ItfRefresh)
 	GetControl() ui.Control
-	Append(child ItfZone, stretchy bool)
+	Append(child IfZone, stretchy bool)
 	GetVolume() int
 	PushControl(ctrl ui.Control)
 	PopControls(last int)
@@ -29,39 +29,39 @@ type ItfRefresh interface {
 	Refresh()
 }
 
-func BuildHorizontalBox(refresh ItfRefresh) ItfZone {
+func BuildHorizontalBox(refresh ItfRefresh) IfZone {
 	it := &ItZone{}
 	it.BindHorizontalBox(it)
 	it.BindRefresh(refresh)
 	return it
 }
 
-func BuildVerticalBox(refresh ItfRefresh) ItfZone {
+func BuildVerticalBox(refresh ItfRefresh) IfZone {
 	it := &ItZone{}
 	it.BindVerticalBox(it)
 	it.BindRefresh(refresh)
 	return it
 }
 
-func BuildFromControl(ctrl ui.Control) ItfZone {
+func BuildFromControl(ctrl ui.Control) IfZone {
 	it := &ItZone{}
 	it.BindControl(it, ctrl)
 	return it
 }
 
-func (it *ItZone) BindHorizontalBox(self ItfZone) {
+func (it *ItZone) BindHorizontalBox(self IfZone) {
 	it.self = self
 	it.box = ui.NewHorizontalBox()
 	it.box.SetPadded(true)
 }
 
-func (it *ItZone) BindVerticalBox(self ItfZone) {
+func (it *ItZone) BindVerticalBox(self IfZone) {
 	it.self = self
 	it.box = ui.NewVerticalBox()
 	it.box.SetPadded(true)
 }
 
-func (it *ItZone) BindControl(self ItfZone, ctrl ui.Control) {
+func (it *ItZone) BindControl(self IfZone, ctrl ui.Control) {
 	it.self = self
 	it.ctrl = ctrl
 }
@@ -82,7 +82,7 @@ func (it *ItZone) GetControl() ui.Control {
 	}
 }
 
-func (it *ItZone) Append(child ItfZone, stretchy bool) {
+func (it *ItZone) Append(child IfZone, stretchy bool) {
 	if it.box != nil {
 		if ctrl := child.GetControl(); ctrl != nil {
 			it.box.Append(ctrl, stretchy)

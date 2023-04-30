@@ -19,7 +19,7 @@ func buildInfo() *ItInfo {
 func (it *ItInfo) buildInfo() {
 	gra := BuildSignal()
 	it.Append(gra, true)
-	inter := BuildInterval()
+	inter := BuildInterval(gra)
 	it.Append(inter, true)
 	if down := zone.BuildHorizontalBox(nil); down != nil {
 		it.Append(down, true)

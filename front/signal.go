@@ -17,6 +17,7 @@ type ItSignal struct {
 func BuildSignal() *ItSignal {
 	it := &ItSignal{}
 	it.area = ui.NewArea(it)
+	it.Mouse = it
 	it.BindControl(it, it.area)
 	it.Loader = it
 	it.IsZeroCenter = true
@@ -35,10 +36,37 @@ func (it *ItSignal) Refresh() {
 }
 
 func (it *ItSignal) Probe() bool {
-	if dt := data.GetData(it.Sign, 0, 4096); dt != nil {
+	var dt *data.ItData
+	if IsAutoView {
+		dt = data.GetData(it.Sign, 0, 65536)
+	} else if it.Sign != ViewSign {
+		if dt = data.GetData(it.Sign, 0, 65536); dt != nil {
+			dt.Sign = ViewSign
+		}
+	}
+	if dt != nil {
 		it.Load(dt)
 		return true
-	} else {
-		return false
 	}
+	return false
+}
+
+func (it *ItSignal) RunMouse(nb int, x, y float64, on bool) {
+	val := it.X.ToVal(x)
+	if nb == 1 && on {
+		it.Croping = true
+		it.CropFrom = val
+		if it.CropTo < it.CropFrom {
+			it.CropTo = it.X.Max
+		}
+	} else if nb == 2 && on {
+		it.Croping = true
+		it.CropTo = val
+		if it.CropFrom > it.CropTo {
+			it.CropFrom = it.X.Min
+		}
+	} else if nb == 3 && on {
+		it.Croping = false
+	}
+	ViewSign++
 }

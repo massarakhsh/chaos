@@ -59,26 +59,29 @@ func (it *ItControl) setModeAnalize() {
 func (it *ItControl) addTemp() {
 	level := it.GetVolume()
 	if combo := ui.NewCombobox(); combo != nil {
-		combo.Append("Пошагово")
-		combo.Append("1 Гц")
-		combo.Append("5 Гц")
-		combo.SetSelected(1)
+		combo.Append("Стоп")
+		combo.Append("Обновить")
+		combo.Append("Автообновление")
+		combo.SetSelected(0)
 		combo.OnSelected(func(c *ui.Combobox) {
 			it.setTemp(level, c.Selected())
 		})
 		it.PushControl(combo)
-		it.setTemp(level, 1)
 	}
 }
 
 func (it *ItControl) setTemp(level int, sel int) {
-	it.PopControls(level)
 	if sel == 1 {
-		DuraUpdate = 1000
+		it.PopControls(level - 1)
+		IsAutoView = false
+		ViewSign++
+		it.addTemp()
 	} else if sel == 2 {
-		DuraUpdate = 200
+		it.PopControls(level)
+		IsAutoView = true
 	} else {
-		DuraUpdate = 0
+		it.PopControls(level)
+		IsAutoView = false
 	}
 }
 

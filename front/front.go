@@ -13,9 +13,9 @@ type ItFront struct {
 	zone.ItZone
 }
 
-var DuraUpdate = 1000
-var ViewSign = 0
 var IsTerminating bool
+var IsAutoView bool
+var ViewSign = 0
 
 func MainStart() {
 	it := &ItFront{}

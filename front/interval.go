@@ -12,10 +12,12 @@ type ItInterval struct {
 	zone.ItZone
 	ItPlot
 	viewSign int
+
+	Signal *ItSignal
 }
 
-func BuildInterval() *ItInterval {
-	it := &ItInterval{}
+func BuildInterval(signal *ItSignal) *ItInterval {
+	it := &ItInterval{Signal: signal}
 	it.area = ui.NewArea(it)
 	it.BindControl(it, it.area)
 	it.Loader = it
@@ -35,10 +37,33 @@ func (it *ItInterval) Refresh() {
 }
 
 func (it *ItInterval) Probe() bool {
-	if dt := data.GetData(it.Sign, 0, 4096); dt != nil {
+	if dt := it.getData(); dt != nil {
 		it.Load(dt)
 		return true
 	} else {
 		return false
 	}
+}
+
+func (it *ItInterval) getData() *data.ItData {
+	// if sign == dataSign {
+	// 	return nil
+	// }
+	sigdata := it.Signal.Data
+	if len(sigdata) < 16 {
+		return nil
+	}
+	data := &data.ItData{}
+	data.Sign = it.Signal.Sign
+	first := 0
+	length := len(sigdata)
+	if length > 256 {
+		first = length - 256
+		length = 256
+	}
+	data.Length = length
+	data.XMin = (it.Signal.X.Min*float64(length-first) + it.Signal.X.Max*float64(first)) / float64(length)
+	data.XMax = it.Signal.X.Max
+	data.Data = sigdata[first:]
+	return data
 }

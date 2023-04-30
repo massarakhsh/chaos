@@ -16,11 +16,12 @@ type ItPlot struct {
 	SP         *ui.DrawStrokeParams
 	area       *ui.Area
 	lastUpdate time.Time
+
+	Mouse IfMouse
 }
 
-type ItPoint struct {
-	XVal, YVal float64
-	XLoc, YLoc float64
+type IfMouse interface {
+	RunMouse(nb int, x, y float64, on bool)
 }
 
 func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
@@ -31,6 +32,7 @@ func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
 	it.resize(p)
 	it.clear(p)
 	it.calc(p)
+	it.drawFon(p)
 	it.drawAxes(p)
 	it.drawGraph(p)
 	it.drawPens(p)
@@ -43,7 +45,7 @@ func (it *ItPlot) clear(p *ui.AreaDrawParams) {
 		Thickness:  2,
 		MiterLimit: ui.DrawDefaultMiterLimit,
 	}
-	brush := mkSolidBrush(0xffffff, 1.0)
+	brush := mkSolidBrush(0xcccccc, 1.0)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
 	path.AddRectangle(0, 0, it.Width, it.Height)
 	path.End()
@@ -56,12 +58,34 @@ func (it *ItPlot) calc(p *ui.AreaDrawParams) {
 	it.Y.Calibrate(bd, it.Height-2*bd, false)
 	it.X.LocZero = it.X.LocDep
 	it.Y.LocZero = it.Y.LocDep
-	if length := it.Count; length >= 2 {
-		for i := 0; i < length; i++ {
-			point := &it.List[i]
-			point.XLoc = it.X.ToLoc(point.XVal)
-			point.YLoc = it.Y.ToLoc(point.YVal)
+}
+
+func (it *ItPlot) drawFon(p *ui.AreaDrawParams) {
+	path := ui.DrawNewPath(ui.DrawFillModeWinding)
+	path.AddRectangle(it.X.LocDep, it.Y.LocDep, it.X.LocSize, it.Y.LocSize)
+	path.End()
+	brush := mkSolidBrush(0xffffff, 1.0)
+	p.Context.Fill(path, brush)
+	path.Free()
+	if it.Croping {
+		xf := it.X.ToLoc(it.CropFrom)
+		if xf < it.X.LocDep {
+			xf = it.X.LocDep
+		} else if xf > it.X.LocDep+it.X.LocSize {
+			xf = it.X.LocDep + it.X.LocSize
 		}
+		xt := it.X.ToLoc(it.CropTo)
+		if xt < xf {
+			xt = xf
+		} else if xt > it.X.LocDep+it.X.LocSize {
+			xt = it.X.LocDep + it.X.LocSize
+		}
+		path := ui.DrawNewPath(ui.DrawFillModeWinding)
+		path.AddRectangle(xf, it.Y.LocDep, xt, it.Y.LocSize)
+		path.End()
+		brush := mkSolidBrush(0xccccff, 1.0)
+		p.Context.Fill(path, brush)
+		path.Free()
 	}
 }
 
@@ -116,10 +140,27 @@ func (it *ItPlot) drawText(p *ui.AreaDrawParams, text string, x, y float64, size
 func (it *ItPlot) drawGraph(p *ui.AreaDrawParams) {
 	brush := mkSolidBrush(0x5599ff, 0.5)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	if len(it.List) > 0 {
-		path.NewFigure(it.List[0].XLoc, it.List[0].YLoc)
-		for i := 1; i < it.Count; i++ {
-			path.LineTo(it.List[i].XLoc, it.List[i].YLoc)
+	if count := len(it.Data); count >= 2 {
+		xf := it.X.ToLoc(it.X.Min)
+		ixf := int64(xf)
+		ymin := it.Y.ToLoc(it.Data[0])
+		ymax := ymin
+		path.NewFigure(xf, ymin)
+		for i := 0; i < count; i++ {
+			xt := it.X.ToLoc((it.X.Min*float64(count-1-i) + it.X.Max*float64(i)) / float64(count-1))
+			yt := it.Y.ToLoc(it.Data[i])
+			if ixt := int64(xt); ixt != ixf {
+				path.LineTo(xf, ymin)
+				path.LineTo(xf, ymax)
+				xf = xt
+				ixf = ixt
+				ymin = yt
+				ymax = ymin
+			} else if yt < ymin {
+				ymin = yt
+			} else if yt > ymax {
+				ymax = yt
+			}
 		}
 	}
 	path.End()
@@ -128,46 +169,27 @@ func (it *ItPlot) drawGraph(p *ui.AreaDrawParams) {
 }
 
 func (it *ItPlot) drawPens(p *ui.AreaDrawParams) {
-	/*if data.Ser.Current >= 0 {
-		xs, ys := pointLocations(it.Width, it.Height)
-		path := ui.DrawNewPath(ui.DrawFillModeWinding)
-		path.NewFigureWithArc(
-			xs[data.Ser.Current], ys[data.Ser.Current],
-			radius,
-			0, 6.23, // TODO pi
-			false)
-		path.End()
-		// use the same brush as for the histogram lines
-		brush := mkSolidBrush(colorDodgerBlue, 1.0)
-		p.Context.Fill(path, brush)
-		path.Free()
-	}*/
 }
 
 func (it *ItPlot) MouseEvent(a *ui.Area, me *ui.AreaMouseEvent) {
-	/*xs, ys := pointLocations(it.Width, it.Height)
-
-	data.Ser.Current = -1
-	for i := 0; i < len(xs); i++ {
-		if inPoint(me.X, me.Y, xs[i], ys[i]) {
-			data.Ser.Current = i
-			break
+	if it.Mouse != nil {
+		if me.Down > 0 {
+			it.Mouse.RunMouse(int(me.Down), me.X, me.Y, true)
 		}
-	}*/
-
+		if me.Up > 0 {
+			it.Mouse.RunMouse(int(me.Up), me.X, me.Y, false)
+		}
+	}
 	a.QueueRedrawAll()
 }
 
 func (it *ItPlot) MouseCrossed(a *ui.Area, left bool) {
-	// do nothing
 }
 
 func (it *ItPlot) DragBroken(a *ui.Area) {
-	// do nothing
 }
 
 func (it *ItPlot) KeyEvent(a *ui.Area, ke *ui.AreaKeyEvent) (handled bool) {
-	// reject all keys
 	return false
 }
 
