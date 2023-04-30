@@ -11,7 +11,6 @@ import (
 
 type ItData struct {
 	Sign       int
-	Length     int
 	XMin, XMax float64
 	Data       []float64
 }
@@ -165,7 +164,6 @@ func GetData(sign int, first int, count int) *ItData {
 		}
 		length = count
 	}
-	data.Length = length
 	data.Data = make([]float64, length)
 	data.XMin = dataPots[from].At.Sub(dataStart).Seconds()
 	for n := 0; n < length; n++ {

@@ -11,16 +11,18 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
-const MAX_WAVE = 1024
+const MAX_FREQUENCY = 5000
 
 type ItSpectr struct {
 	zone.ItZone
 	ItPlot
-	viewSign int
+
+	Interval *ItInterval
+	ViewSign int
 }
 
-func BuildSpectr() *ItSpectr {
-	it := &ItSpectr{}
+func BuildSpectr(interval *ItInterval) *ItSpectr {
+	it := &ItSpectr{Interval: interval}
 	it.area = ui.NewArea(it)
 	it.BindControl(it, it.area)
 	it.Loader = it
@@ -40,13 +42,18 @@ func (it *ItSpectr) Refresh() {
 }
 
 func (it *ItSpectr) Probe() bool {
-	if dt := data.GetData(it.Sign, 0, 65536); dt == nil || dt.Length < 2 {
+	if it.Sign == it.Interval.Sign && it.ViewSign == it.Interval.ViewSign {
+		return false
+	} else if dt := it.Interval.GetData(); dt == nil {
+		return false
+	} else if length := len(dt.Data); length < 2 {
 		return false
 	} else {
+		it.ViewSign = it.Interval.ViewSign
 		sign := dt.Sign
-		step := (dt.XMax - dt.XMin) / float64(dt.Length)
-		vals := make([]float64, dt.Length)
-		for n := 0; n < dt.Length; n++ {
+		step := (dt.XMax - dt.XMin) / float64(length)
+		vals := make([]float64, length)
+		for n := 0; n < length; n++ {
 			vals[n] = dt.Data[n]
 		}
 		spectr := fft.FFTReal(vals)
@@ -60,23 +67,32 @@ func (it *ItSpectr) storeData(sign int, step float64, info []complex128) {
 	zone := float64(dia) * step
 	serial := &data.ItData{}
 	serial.Sign = sign
-	serial.Length = MAX_WAVE
 	serial.XMin = 0
-	serial.XMax = float64(MAX_WAVE)
-	serial.Data = make([]float64, MAX_WAVE)
-	for n := 0; n < MAX_WAVE; n++ {
-		ampl := 0.0
-		if n > 1 {
-			frq := float64(n) * zone
-			rfrq := math.Floor(frq)
-			ifrq := int(rfrq)
-			if ifrq > 0 && ifrq+1 < dia {
-				left := math.Abs(real(info[ifrq]))
-				right := math.Abs(real(info[ifrq+1]))
-				ampl = left*(rfrq+1-frq) + right*(frq-rfrq)
-			}
+	serial.XMax = float64(MAX_FREQUENCY)
+	serial.Data = make([]float64, MAX_FREQUENCY)
+	left := 1.0
+	ileft := 1
+	for n := 1; n < MAX_FREQUENCY; n++ {
+		summa := 0.0
+		weight := 0.0
+		frq := float64(n) * zone
+		ifrq := int(math.Floor(frq))
+		for ileft < ifrq && ileft < dia {
+			doze := float64(ileft+1) - left
+			summa += math.Abs(real(info[ileft])) * doze
+			weight += doze
+			ileft++
+			left = float64(ileft)
 		}
-		serial.Data[n] = ampl
+		if ileft < dia {
+			doze := frq - left
+			summa += math.Abs(real(info[ileft])) * doze
+			weight += doze
+			left = frq
+		}
+		if weight > 0 {
+			serial.Data[n] = summa / weight
+		}
 	}
 	it.Load(serial)
 }

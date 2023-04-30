@@ -6,7 +6,6 @@ import (
 
 type ItInfo struct {
 	zone.ItZone
-	viewSign int
 }
 
 func buildInfo() *ItInfo {
@@ -23,7 +22,7 @@ func (it *ItInfo) buildInfo() {
 	it.Append(inter, true)
 	if down := zone.BuildHorizontalBox(nil); down != nil {
 		it.Append(down, true)
-		if child := BuildSpectr(); child != nil {
+		if child := BuildSpectr(inter); child != nil {
 			down.Append(child, true)
 		}
 	}

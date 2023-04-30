@@ -1,6 +1,8 @@
 package front
 
 import (
+	"math/rand"
+
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
 	"github.com/massarakhsh/chaos/data"
@@ -62,7 +64,11 @@ func (it *ItControl) addTemp() {
 		combo.Append("Стоп")
 		combo.Append("Обновить")
 		combo.Append("Автообновление")
-		combo.SetSelected(0)
+		if IsAutoView {
+			combo.SetSelected(2)
+		} else {
+			combo.SetSelected(0)
+		}
 		combo.OnSelected(func(c *ui.Combobox) {
 			it.setTemp(level, c.Selected())
 		})
@@ -74,7 +80,7 @@ func (it *ItControl) setTemp(level int, sel int) {
 	if sel == 1 {
 		it.PopControls(level - 1)
 		IsAutoView = false
-		ViewSign++
+		ViewSign = rand.Int()
 		it.addTemp()
 	} else if sel == 2 {
 		it.PopControls(level)

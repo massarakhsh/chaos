@@ -25,10 +25,7 @@ type IfMouse interface {
 }
 
 func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
-	//it.Loader.Probe()
-	if it.Name == "signal" {
-		it.Name += ""
-	}
+	it.Gate.Lock()
 	it.resize(p)
 	it.clear(p)
 	it.calc(p)
@@ -36,6 +33,7 @@ func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
 	it.drawAxes(p)
 	it.drawGraph(p)
 	it.drawPens(p)
+	it.Gate.Unlock()
 }
 
 func (it *ItPlot) clear(p *ui.AreaDrawParams) {
@@ -54,8 +52,8 @@ func (it *ItPlot) clear(p *ui.AreaDrawParams) {
 }
 
 func (it *ItPlot) calc(p *ui.AreaDrawParams) {
-	it.X.Calibrate(bd, it.Width-2*bd, true)
-	it.Y.Calibrate(bd, it.Height-2*bd, false)
+	it.X.calibrate(bd, it.Width-2*bd, true)
+	it.Y.calibrate(bd, it.Height-2*bd, false)
 	it.X.LocZero = it.X.LocDep
 	it.Y.LocZero = it.Y.LocDep
 }
@@ -67,7 +65,7 @@ func (it *ItPlot) drawFon(p *ui.AreaDrawParams) {
 	brush := mkSolidBrush(0xffffff, 1.0)
 	p.Context.Fill(path, brush)
 	path.Free()
-	if it.Croping {
+	if it.CropSign != 0 {
 		xf := it.X.ToLoc(it.CropFrom)
 		if xf < it.X.LocDep {
 			xf = it.X.LocDep
@@ -81,7 +79,7 @@ func (it *ItPlot) drawFon(p *ui.AreaDrawParams) {
 			xt = it.X.LocDep + it.X.LocSize
 		}
 		path := ui.DrawNewPath(ui.DrawFillModeWinding)
-		path.AddRectangle(xf, it.Y.LocDep, xt, it.Y.LocSize)
+		path.AddRectangle(xf, it.Y.LocDep, xt-xf, it.Y.LocSize)
 		path.End()
 		brush := mkSolidBrush(0xccccff, 1.0)
 		p.Context.Fill(path, brush)

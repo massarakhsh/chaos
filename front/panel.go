@@ -3,6 +3,7 @@ package front
 import (
 	"fmt"
 	"math"
+	"sync"
 
 	"github.com/andlabs/ui"
 	"github.com/massarakhsh/chaos/data"
@@ -31,18 +32,19 @@ type ItPanel struct {
 	IsZeroCenter  bool
 	IsZeroMin     bool
 
+	Gate sync.Mutex
 	Data []float64
 	X    ItAxis
 	Y    ItAxis
 
-	Croping  bool
+	CropSign int
 	CropFrom float64
 	CropTo   float64
 
 	Loader IfLoad
 }
 
-func (it *ItAxis) Calibrate(dep, size float64, acc bool) {
+func (it *ItAxis) calibrate(dep, size float64, acc bool) {
 	it.LocDep = dep
 	it.LocSize = size
 	it.Acc = acc
@@ -97,16 +99,17 @@ func (it *ItAxis) ToVal(loc float64) float64 {
 	if it.LocSize <= 0 {
 		return (it.Min + it.Max) / 2
 	}
-	val := (it.Max*loc + it.Min*(it.LocSize-loc)) / it.LocSize
+	val := (it.Max*(loc-it.LocDep) + it.Min*(it.LocSize-loc+it.LocDep)) / it.LocSize
 	return val
 }
 
 func (it *ItPanel) Load(serial *data.ItData) {
+	it.Gate.Lock()
 	if serial == nil {
 		it.Data = []float64{}
 		it.X = ItAxis{}
 		it.Y = ItAxis{}
-	} else if length := serial.Length; length < 2 {
+	} else if length := len(serial.Data); length < 2 {
 		it.Data = []float64{}
 		it.X = ItAxis{}
 		it.Y = ItAxis{}
@@ -149,6 +152,38 @@ func (it *ItPanel) Load(serial *data.ItData) {
 			}
 		}
 	}
+	it.Gate.Unlock()
+}
+
+func (it *ItPanel) GetData() *data.ItData {
+	it.Gate.Lock()
+	length := len(it.Data)
+	left := 0
+	right := length
+	if it.CropSign != 0 && it.X.Max > it.X.Min {
+		left = int((it.CropFrom - it.X.Min) * float64(length) / (it.X.Max - it.X.Min))
+		right = int((it.CropTo - it.X.Min) * float64(length) / (it.X.Max - it.X.Min))
+		if left < 0 {
+			left = 0
+		} else if left > length {
+			left = length
+		}
+		if right < left {
+			right = left
+		} else if right > length {
+			right = length
+		}
+	}
+	var dt *data.ItData
+	if right > left {
+		dt = &data.ItData{}
+		dt.Sign = it.Sign
+		dt.XMin = (it.X.Min*float64(length-left) + it.X.Max*float64(left)) / float64(length)
+		dt.XMax = (it.X.Min*float64(length-right) + it.X.Max*float64(right)) / float64(length)
+		dt.Data = it.Data[left:right]
+	}
+	it.Gate.Unlock()
+	return dt
 }
 
 func (it *ItPanel) resize(p *ui.AreaDrawParams) {

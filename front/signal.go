@@ -1,6 +1,7 @@
 package front
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/andlabs/ui"
@@ -11,7 +12,6 @@ import (
 type ItSignal struct {
 	zone.ItZone
 	ItPlot
-	viewSign int
 }
 
 func BuildSignal() *ItSignal {
@@ -38,9 +38,9 @@ func (it *ItSignal) Refresh() {
 func (it *ItSignal) Probe() bool {
 	var dt *data.ItData
 	if IsAutoView {
-		dt = data.GetData(it.Sign, 0, 65536)
+		dt = data.GetData(it.Sign, 0, 65536*4)
 	} else if it.Sign != ViewSign {
-		if dt = data.GetData(it.Sign, 0, 65536); dt != nil {
+		if dt = data.GetData(it.Sign, 0, 65536*4); dt != nil {
 			dt.Sign = ViewSign
 		}
 	}
@@ -54,19 +54,18 @@ func (it *ItSignal) Probe() bool {
 func (it *ItSignal) RunMouse(nb int, x, y float64, on bool) {
 	val := it.X.ToVal(x)
 	if nb == 1 && on {
-		it.Croping = true
+		it.CropSign = rand.Int()
 		it.CropFrom = val
 		if it.CropTo < it.CropFrom {
 			it.CropTo = it.X.Max
 		}
-	} else if nb == 2 && on {
-		it.Croping = true
+	} else if nb == 3 && on {
+		it.CropSign = rand.Int()
 		it.CropTo = val
 		if it.CropFrom > it.CropTo {
 			it.CropFrom = it.X.Min
 		}
-	} else if nb == 3 && on {
-		it.Croping = false
+	} else if nb == 2 && on {
+		it.CropSign = 0
 	}
-	ViewSign++
 }
