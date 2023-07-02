@@ -20,10 +20,8 @@ func (it *ItInfo) buildInfo() {
 	it.Append(gra, true)
 	inter := BuildInterval(gra)
 	it.Append(inter, true)
-	if down := zone.BuildHorizontalBox(nil); down != nil {
-		it.Append(down, true)
-		if child := BuildSpectr(inter); child != nil {
-			down.Append(child, true)
-		}
-	}
+	down := zone.BuildHorizontalBox(nil)
+	it.Append(down, true)
+	child := BuildSpectr(inter)
+	down.Append(child, true)
 }

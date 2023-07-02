@@ -119,8 +119,12 @@ func nextSource(pos int) int {
 
 func SaveToFile() {
 	if dataSize > 0 {
-		filename := time.Now().Format("2006-01-02-15-04-05.cha")
+		filename := time.Now().Format("cha/2006-01-02-15-04-05.cha")
 		file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0666)
+		if err != nil {
+			os.Mkdir("cha", 0777)
+			file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0666)
+		}
 		if err != nil {
 			fmt.Println(err)
 		} else {
@@ -175,10 +179,9 @@ func GetData(sign int, first int, count int) *ItData {
 	return data
 }
 
-func ReadFromFile() {
+func ReadFromFile(filename string) {
 	dataLock.Lock()
 	genReset()
-	filename := "data.cha"
 	if file, err := os.Open(filename); err == nil {
 		now := time.Now()
 		scanner := bufio.NewScanner(file)

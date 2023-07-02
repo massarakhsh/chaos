@@ -20,9 +20,9 @@ func BuildInterval(signal *ItSignal) *ItInterval {
 	it := &ItInterval{Signal: signal}
 	it.area = ui.NewArea(it)
 	it.BindControl(it, it.area)
-	it.Loader = it
-	it.IsZeroCenter = true
-	it.Width, it.Height = 1024, 512
+	it.Panel.Loader = it
+	it.Panel.IsZeroCenter = true
+	it.Panel.Width, it.Panel.Height = 1024, 512
 	it.BindRefresh(it)
 	return it
 }
@@ -37,9 +37,9 @@ func (it *ItInterval) Refresh() {
 }
 
 func (it *ItInterval) Probe() bool {
-	if it.Sign != it.Signal.Sign || it.ViewSign != it.Signal.CropSign {
+	if it.Panel.Sign != it.Signal.Panel.Sign || it.ViewSign != it.Signal.Panel.CropSign {
 		if dt := it.getData(); dt != nil {
-			it.Load(dt)
+			it.Panel.Load(dt)
 			return true
 		}
 	}
@@ -47,6 +47,6 @@ func (it *ItInterval) Probe() bool {
 }
 
 func (it *ItInterval) getData() *data.ItData {
-	it.ViewSign = it.Signal.CropSign
-	return it.Signal.GetData()
+	it.ViewSign = it.Signal.Panel.CropSign
+	return it.Signal.Panel.GetData()
 }

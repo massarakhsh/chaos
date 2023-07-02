@@ -2,6 +2,7 @@ package front
 
 import (
 	"math/rand"
+	"os"
 
 	"github.com/andlabs/ui"
 	_ "github.com/andlabs/ui/winmanifest"
@@ -11,6 +12,8 @@ import (
 
 type ItControl struct {
 	zone.ItZone
+	listFiles []string
+	nameFile  string
 }
 
 func buildControl() *ItControl {
@@ -46,7 +49,7 @@ func (it *ItControl) setMode(level int, sel int) {
 		it.addTemp()
 	} else if sel == 3 {
 		data.SetSource(data.SOURCE_FILE)
-		it.addReadFile()
+		it.addGetFile()
 	} else if sel == 4 {
 		data.SetSource(data.SOURCE_ANALIZE)
 	} else {
@@ -91,11 +94,40 @@ func (it *ItControl) setTemp(level int, sel int) {
 	}
 }
 
+func (it *ItControl) addGetFile() {
+	level := it.GetVolume()
+	if combo := ui.NewCombobox(); combo != nil {
+		combo.Append("--- choose file ---")
+		var list []string
+		if dir, err := os.ReadDir("cha"); err == nil {
+			for _, file := range dir {
+				list = append(list, file.Name())
+				combo.Append(file.Name())
+			}
+		}
+		it.listFiles = list
+		it.nameFile = ""
+		combo.SetSelected(0)
+		combo.OnSelected(func(c *ui.Combobox) {
+			it.setGetFile(level, c.Selected())
+		})
+		it.PushControl(combo)
+		it.setMode(level, 0)
+	}
+}
+
+func (it *ItControl) setGetFile(level int, sel int) {
+	it.PopControls(level)
+	if sel > 0 && sel <= len(it.listFiles) {
+		it.nameFile = "cha/" + it.listFiles[sel-1]
+		it.addReadFile()
+	}
+}
+
 func (it *ItControl) addReadFile() {
-	//level := it.GetVolume()
 	if button := ui.NewButton("Прочитать"); button != nil {
 		button.OnClicked(func(b *ui.Button) {
-			data.ReadFromFile()
+			data.ReadFromFile(it.nameFile)
 			it.setModeAnalize()
 		})
 		it.PushControl(button)

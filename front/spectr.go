@@ -25,9 +25,9 @@ func BuildSpectr(interval *ItInterval) *ItSpectr {
 	it := &ItSpectr{Interval: interval}
 	it.area = ui.NewArea(it)
 	it.BindControl(it, it.area)
-	it.Loader = it
-	it.IsZeroCenter = false
-	it.Width, it.Height = 512, 256
+	it.Panel.Loader = it
+	it.Panel.IsZeroCenter = false
+	it.Panel.Width, it.Panel.Height = 512, 256
 	it.BindRefresh(it)
 	return it
 }
@@ -42,9 +42,9 @@ func (it *ItSpectr) Refresh() {
 }
 
 func (it *ItSpectr) Probe() bool {
-	if it.Sign == it.Interval.Sign && it.ViewSign == it.Interval.ViewSign {
+	if it.Panel.Sign == it.Interval.Panel.Sign && it.ViewSign == it.Interval.ViewSign {
 		return false
-	} else if dt := it.Interval.GetData(); dt == nil {
+	} else if dt := it.Interval.Panel.GetData(); dt == nil {
 		return false
 	} else if length := len(dt.Data); length < 2 {
 		return false
@@ -94,5 +94,5 @@ func (it *ItSpectr) storeData(sign int, step float64, info []complex128) {
 			serial.Data[n] = summa / weight
 		}
 	}
-	it.Load(serial)
+	it.Panel.Load(serial)
 }

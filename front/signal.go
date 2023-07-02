@@ -19,9 +19,9 @@ func BuildSignal() *ItSignal {
 	it.area = ui.NewArea(it)
 	it.Mouse = it
 	it.BindControl(it, it.area)
-	it.Loader = it
-	it.IsZeroCenter = true
-	it.Width, it.Height = 1024, 512
+	it.Panel.Loader = it
+	it.Panel.IsZeroCenter = true
+	it.Panel.Width, it.Panel.Height = 1024, 512
 	it.BindRefresh(it)
 	return it
 }
@@ -38,34 +38,34 @@ func (it *ItSignal) Refresh() {
 func (it *ItSignal) Probe() bool {
 	var dt *data.ItData
 	if IsAutoView {
-		dt = data.GetData(it.Sign, 0, 65536*4)
-	} else if it.Sign != ViewSign {
-		if dt = data.GetData(it.Sign, 0, 65536*4); dt != nil {
+		dt = data.GetData(it.Panel.Sign, 0, 65536*4)
+	} else if it.Panel.Sign != ViewSign {
+		if dt = data.GetData(it.Panel.Sign, 0, 65536*4); dt != nil {
 			dt.Sign = ViewSign
 		}
 	}
 	if dt != nil {
-		it.Load(dt)
+		it.Panel.Load(dt)
 		return true
 	}
 	return false
 }
 
 func (it *ItSignal) RunMouse(nb int, x, y float64, on bool) {
-	val := it.X.ToVal(x)
+	val := it.Panel.X.ToVal(x)
 	if nb == 1 && on {
-		it.CropSign = rand.Int()
-		it.CropFrom = val
-		if it.CropTo < it.CropFrom {
-			it.CropTo = it.X.Max
+		it.Panel.CropSign = rand.Int()
+		it.Panel.CropFrom = val
+		if it.Panel.CropTo < it.Panel.CropFrom {
+			it.Panel.CropTo = it.Panel.X.Max
 		}
 	} else if nb == 3 && on {
-		it.CropSign = rand.Int()
-		it.CropTo = val
-		if it.CropFrom > it.CropTo {
-			it.CropFrom = it.X.Min
+		it.Panel.CropSign = rand.Int()
+		it.Panel.CropTo = val
+		if it.Panel.CropFrom > it.Panel.CropTo {
+			it.Panel.CropFrom = it.Panel.X.Min
 		}
 	} else if nb == 2 && on {
-		it.CropSign = 0
+		it.Panel.CropSign = 0
 	}
 }

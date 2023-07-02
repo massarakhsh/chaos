@@ -12,7 +12,7 @@ const bd = 10
 //const radius = 5
 
 type ItPlot struct {
-	ItPanel
+	Panel      ItPanel
 	SP         *ui.DrawStrokeParams
 	area       *ui.Area
 	lastUpdate time.Time
@@ -25,15 +25,15 @@ type IfMouse interface {
 }
 
 func (it *ItPlot) Draw(a *ui.Area, p *ui.AreaDrawParams) {
-	it.Gate.Lock()
-	it.resize(p)
+	it.Panel.Gate.Lock()
+	it.Panel.resize(p)
 	it.clear(p)
 	it.calc(p)
 	it.drawFon(p)
 	it.drawAxes(p)
 	it.drawGraph(p)
 	it.drawPens(p)
-	it.Gate.Unlock()
+	it.Panel.Gate.Unlock()
 }
 
 func (it *ItPlot) clear(p *ui.AreaDrawParams) {
@@ -45,41 +45,41 @@ func (it *ItPlot) clear(p *ui.AreaDrawParams) {
 	}
 	brush := mkSolidBrush(0xcccccc, 1.0)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	path.AddRectangle(0, 0, it.Width, it.Height)
+	path.AddRectangle(0, 0, it.Panel.Width, it.Panel.Height)
 	path.End()
 	p.Context.Fill(path, brush)
 	path.Free()
 }
 
 func (it *ItPlot) calc(p *ui.AreaDrawParams) {
-	it.X.calibrate(bd, it.Width-2*bd, true)
-	it.Y.calibrate(bd, it.Height-2*bd, false)
-	it.X.LocZero = it.X.LocDep
-	it.Y.LocZero = it.Y.LocDep
+	it.Panel.X.calibrate(bd, it.Panel.Width-2*bd, true)
+	it.Panel.Y.calibrate(bd, it.Panel.Height-2*bd, false)
+	it.Panel.X.LocZero = it.Panel.X.LocDep
+	it.Panel.Y.LocZero = it.Panel.Y.LocDep
 }
 
 func (it *ItPlot) drawFon(p *ui.AreaDrawParams) {
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	path.AddRectangle(it.X.LocDep, it.Y.LocDep, it.X.LocSize, it.Y.LocSize)
+	path.AddRectangle(it.Panel.X.LocDep, it.Panel.Y.LocDep, it.Panel.X.LocSize, it.Panel.Y.LocSize)
 	path.End()
 	brush := mkSolidBrush(0xffffff, 1.0)
 	p.Context.Fill(path, brush)
 	path.Free()
-	if it.CropSign != 0 {
-		xf := it.X.ToLoc(it.CropFrom)
-		if xf < it.X.LocDep {
-			xf = it.X.LocDep
-		} else if xf > it.X.LocDep+it.X.LocSize {
-			xf = it.X.LocDep + it.X.LocSize
+	if it.Panel.CropSign != 0 {
+		xf := it.Panel.X.ToLoc(it.Panel.CropFrom)
+		if xf < it.Panel.X.LocDep {
+			xf = it.Panel.X.LocDep
+		} else if xf > it.Panel.X.LocDep+it.Panel.X.LocSize {
+			xf = it.Panel.X.LocDep + it.Panel.X.LocSize
 		}
-		xt := it.X.ToLoc(it.CropTo)
+		xt := it.Panel.X.ToLoc(it.Panel.CropTo)
 		if xt < xf {
 			xt = xf
-		} else if xt > it.X.LocDep+it.X.LocSize {
-			xt = it.X.LocDep + it.X.LocSize
+		} else if xt > it.Panel.X.LocDep+it.Panel.X.LocSize {
+			xt = it.Panel.X.LocDep + it.Panel.X.LocSize
 		}
 		path := ui.DrawNewPath(ui.DrawFillModeWinding)
-		path.AddRectangle(xf, it.Y.LocDep, xt-xf, it.Y.LocSize)
+		path.AddRectangle(xf, it.Panel.Y.LocDep, xt-xf, it.Panel.Y.LocSize)
 		path.End()
 		brush := mkSolidBrush(0xccccff, 1.0)
 		p.Context.Fill(path, brush)
@@ -89,11 +89,11 @@ func (it *ItPlot) drawFon(p *ui.AreaDrawParams) {
 
 func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
-		for x := it.X.First; x < it.X.Max; x += it.X.Step {
-			if xt := it.X.ToLoc(x); xt >= 0 && xt < it.Width {
-				path.NewFigure(it.X.LocDep+xt, it.X.LocDep+it.Y.LocSize)
-				path.LineTo(it.X.LocDep+xt, it.X.LocDep)
-				it.drawText(p, fmt.Sprintf(it.X.Format, x), it.X.LocDep+xt-16, it.Y.LocDep+it.Y.LocSize-10, 10, 0.99, 0, 0, 0.99)
+		for x := it.Panel.X.First; x < it.Panel.X.Max; x += it.Panel.X.Step {
+			if xt := it.Panel.X.ToLoc(x); xt >= 0 && xt < it.Panel.Width {
+				path.NewFigure(it.Panel.X.LocDep+xt, it.Panel.X.LocDep+it.Panel.Y.LocSize)
+				path.LineTo(it.Panel.X.LocDep+xt, it.Panel.X.LocDep)
+				it.drawText(p, fmt.Sprintf(it.Panel.X.Format, x), it.Panel.X.LocDep+xt-16, it.Panel.Y.LocDep+it.Panel.Y.LocSize-10, 10, 0.99, 0, 0, 0.99)
 			}
 		}
 		path.End()
@@ -102,10 +102,10 @@ func (it *ItPlot) drawAxes(p *ui.AreaDrawParams) {
 		path.Free()
 	}
 	if path := ui.DrawNewPath(ui.DrawFillModeWinding); path != nil {
-		path.NewFigure(it.X.LocZero, it.Y.LocDep+it.Y.LocSize)
-		path.LineTo(it.X.LocZero, it.Y.LocDep)
-		path.NewFigure(it.X.LocDep, bd+it.Y.LocSize-it.Y.LocZero)
-		path.LineTo(it.X.LocDep+it.X.LocSize, bd+it.Y.LocSize-it.Y.LocZero)
+		path.NewFigure(it.Panel.X.LocZero, it.Panel.Y.LocDep+it.Panel.Y.LocSize)
+		path.LineTo(it.Panel.X.LocZero, it.Panel.Y.LocDep)
+		path.NewFigure(it.Panel.X.LocDep, bd+it.Panel.Y.LocSize-it.Panel.Y.LocZero)
+		path.LineTo(it.Panel.X.LocDep+it.Panel.X.LocSize, bd+it.Panel.Y.LocSize-it.Panel.Y.LocZero)
 		path.End()
 		brush := mkSolidBrush(0x000000, 1.0)
 		p.Context.Stroke(path, brush, it.SP)
@@ -127,7 +127,7 @@ func (it *ItPlot) drawText(p *ui.AreaDrawParams, text string, x, y float64, size
 	lp := ui.DrawTextLayoutParams{
 		String:      attrstr,
 		DefaultFont: &df,
-		Width:       it.Width - x,
+		Width:       it.Panel.Width - x,
 		Align:       ui.DrawTextAlignLeft,
 	}
 	tl := ui.DrawNewTextLayout(&lp)
@@ -138,15 +138,15 @@ func (it *ItPlot) drawText(p *ui.AreaDrawParams, text string, x, y float64, size
 func (it *ItPlot) drawGraph(p *ui.AreaDrawParams) {
 	brush := mkSolidBrush(0x5599ff, 0.5)
 	path := ui.DrawNewPath(ui.DrawFillModeWinding)
-	if count := len(it.Data); count >= 2 {
-		xf := it.X.ToLoc(it.X.Min)
+	if count := len(it.Panel.Data); count >= 2 {
+		xf := it.Panel.X.ToLoc(it.Panel.X.Min)
 		ixf := int64(xf)
-		ymin := it.Y.ToLoc(it.Data[0])
+		ymin := it.Panel.Y.ToLoc(it.Panel.Data[0])
 		ymax := ymin
 		path.NewFigure(xf, ymin)
 		for i := 0; i < count; i++ {
-			xt := it.X.ToLoc((it.X.Min*float64(count-1-i) + it.X.Max*float64(i)) / float64(count-1))
-			yt := it.Y.ToLoc(it.Data[i])
+			xt := it.Panel.X.ToLoc((it.Panel.X.Min*float64(count-1-i) + it.Panel.X.Max*float64(i)) / float64(count-1))
+			yt := it.Panel.Y.ToLoc(it.Panel.Data[i])
 			if ixt := int64(xt); ixt != ixf {
 				path.LineTo(xf, ymin)
 				path.LineTo(xf, ymax)
