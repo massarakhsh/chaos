@@ -1,7 +1,6 @@
 package front
 
 import (
-	"math/rand"
 	"time"
 
 	"github.com/andlabs/ui"
@@ -49,23 +48,4 @@ func (it *ItSignal) Probe() bool {
 		return true
 	}
 	return false
-}
-
-func (it *ItSignal) RunMouse(nb int, x, y float64, on bool) {
-	val := it.Panel.X.ToVal(x)
-	if nb == 1 && on {
-		it.Panel.CropSign = rand.Int()
-		it.Panel.CropFrom = val
-		if it.Panel.CropTo < it.Panel.CropFrom {
-			it.Panel.CropTo = it.Panel.X.Max
-		}
-	} else if nb == 3 && on {
-		it.Panel.CropSign = rand.Int()
-		it.Panel.CropTo = val
-		if it.Panel.CropFrom > it.Panel.CropTo {
-			it.Panel.CropFrom = it.Panel.X.Min
-		}
-	} else if nb == 2 && on {
-		it.Panel.CropSign = 0
-	}
 }

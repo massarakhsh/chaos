@@ -203,3 +203,7 @@ func mkSolidBrush(color uint32, alpha float64) *ui.DrawBrush {
 	brush.A = alpha
 	return brush
 }
+
+func (it *ItPlot) RunMouse(nb int, x, y float64, on bool) {
+	it.Panel.RunMouse(nb, x, y, on)
+}

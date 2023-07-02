@@ -3,6 +3,7 @@ package front
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"sync"
 
 	"github.com/andlabs/ui"
@@ -192,4 +193,23 @@ func (it *ItPanel) resize(p *ui.AreaDrawParams) {
 	m := ui.DrawNewMatrix()
 	//m.Translate(bd, bd)
 	p.Context.Transform(m)
+}
+
+func (it *ItPanel) RunMouse(nb int, x, y float64, on bool) {
+	val := it.X.ToVal(x)
+	if nb == 1 && on {
+		it.CropSign = rand.Int()
+		it.CropFrom = val
+		if it.CropTo < it.CropFrom {
+			it.CropTo = it.X.Max
+		}
+	} else if nb == 3 && on {
+		it.CropSign = rand.Int()
+		it.CropTo = val
+		if it.CropFrom > it.CropTo {
+			it.CropFrom = it.X.Min
+		}
+	} else if nb == 2 && on {
+		it.CropSign = 0
+	}
 }

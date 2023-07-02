@@ -12,16 +12,15 @@ type ItInterval struct {
 	zone.ItZone
 	ItPlot
 
-	Signal   *ItSignal
+	Source   *ItPanel
 	ViewSign int
 }
 
-func BuildInterval(signal *ItSignal) *ItInterval {
-	it := &ItInterval{Signal: signal}
+func BuildInterval(source *ItPanel) *ItInterval {
+	it := &ItInterval{Source: source}
 	it.area = ui.NewArea(it)
 	it.BindControl(it, it.area)
 	it.Panel.Loader = it
-	it.Panel.IsZeroCenter = true
 	it.Panel.Width, it.Panel.Height = 1024, 512
 	it.BindRefresh(it)
 	return it
@@ -37,7 +36,7 @@ func (it *ItInterval) Refresh() {
 }
 
 func (it *ItInterval) Probe() bool {
-	if it.Panel.Sign != it.Signal.Panel.Sign || it.ViewSign != it.Signal.Panel.CropSign {
+	if it.Panel.Sign != it.Source.Sign || it.ViewSign != it.Source.CropSign {
 		if dt := it.getData(); dt != nil {
 			it.Panel.Load(dt)
 			return true
@@ -47,6 +46,6 @@ func (it *ItInterval) Probe() bool {
 }
 
 func (it *ItInterval) getData() *data.ItData {
-	it.ViewSign = it.Signal.Panel.CropSign
-	return it.Signal.Panel.GetData()
+	it.ViewSign = it.Source.CropSign
+	return it.Source.GetData()
 }

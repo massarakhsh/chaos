@@ -24,6 +24,7 @@ type ItSpectr struct {
 func BuildSpectr(interval *ItInterval) *ItSpectr {
 	it := &ItSpectr{Interval: interval}
 	it.area = ui.NewArea(it)
+	it.Mouse = it
 	it.BindControl(it, it.area)
 	it.Panel.Loader = it
 	it.Panel.IsZeroCenter = false

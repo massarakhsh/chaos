@@ -18,10 +18,12 @@ func buildInfo() *ItInfo {
 func (it *ItInfo) buildInfo() {
 	gra := BuildSignal()
 	it.Append(gra, true)
-	inter := BuildInterval(gra)
+	inter := BuildInterval(&gra.Panel)
 	it.Append(inter, true)
 	down := zone.BuildHorizontalBox(nil)
 	it.Append(down, true)
 	child := BuildSpectr(inter)
 	down.Append(child, true)
+	crop := BuildInterval(&child.Panel)
+	down.Append(crop, true)
 }
