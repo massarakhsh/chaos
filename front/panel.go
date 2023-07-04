@@ -28,7 +28,8 @@ type ItAxis struct {
 
 type ItPanel struct {
 	Name          string
-	Sign          int
+	SignIn        string
+	SignOut       string
 	Width, Height float64
 	IsZeroCenter  bool
 	IsZeroMin     bool
@@ -115,7 +116,8 @@ func (it *ItPanel) Load(serial *data.ItData) {
 		it.X = ItAxis{}
 		it.Y = ItAxis{}
 	} else {
-		it.Sign = serial.Sign
+		it.SignIn = serial.Sign
+		it.SignOut = serial.Sign
 		it.Data = serial.Data
 		it.X = ItAxis{Min: serial.XMin, Max: serial.XMax}
 		if it.X.Min >= it.X.Max {
@@ -178,7 +180,7 @@ func (it *ItPanel) GetData() *data.ItData {
 	var dt *data.ItData
 	if right > left {
 		dt = &data.ItData{}
-		dt.Sign = it.Sign
+		dt.Sign = it.SignOut
 		dt.XMin = (it.X.Min*float64(length-left) + it.X.Max*float64(left)) / float64(length)
 		dt.XMax = (it.X.Min*float64(length-right) + it.X.Max*float64(right)) / float64(length)
 		dt.Data = it.Data[left:right]
@@ -212,4 +214,5 @@ func (it *ItPanel) RunMouse(nb int, x, y float64, on bool) {
 	} else if nb == 2 && on {
 		it.CropSign = 0
 	}
+	it.SignOut = fmt.Sprintf("%s_%d", it.SignIn, it.CropSign)
 }

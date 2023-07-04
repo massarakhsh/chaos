@@ -37,11 +37,10 @@ func (it *ItSignal) Refresh() {
 func (it *ItSignal) Probe() bool {
 	var dt *data.ItData
 	if IsAutoView {
-		dt = data.GetData(it.Panel.Sign, 0, 65536*4)
-	} else if it.Panel.Sign != ViewSign {
-		if dt = data.GetData(it.Panel.Sign, 0, 65536*4); dt != nil {
-			dt.Sign = ViewSign
-		}
+		dt = data.GetData(it.Panel.SignIn, 0, 65536*4)
+	} else if IsSignView {
+		IsSignView = false
+		dt = data.GetData("", 0, 65536*4)
 	}
 	if dt != nil {
 		it.Panel.Load(dt)

@@ -26,7 +26,7 @@ func buildFile() *ItFile {
 func (it *ItFile) addControls() {
 	if button := ui.NewButton("Обновить"); button != nil {
 		button.OnClicked(func(b *ui.Button) {
-			ViewSign++
+			SignalRedraw()
 		})
 		it.PushControl(button)
 	}

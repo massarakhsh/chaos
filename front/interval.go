@@ -12,8 +12,7 @@ type ItInterval struct {
 	zone.ItZone
 	ItPlot
 
-	Source   *ItPanel
-	ViewSign int
+	Source *ItPanel
 }
 
 func BuildInterval(source *ItPanel) *ItInterval {
@@ -36,7 +35,7 @@ func (it *ItInterval) Refresh() {
 }
 
 func (it *ItInterval) Probe() bool {
-	if it.Panel.Sign != it.Source.Sign || it.ViewSign != it.Source.CropSign {
+	if it.Panel.SignIn != it.Source.SignOut {
 		if dt := it.getData(); dt != nil {
 			it.Panel.Load(dt)
 			return true
@@ -46,6 +45,5 @@ func (it *ItInterval) Probe() bool {
 }
 
 func (it *ItInterval) getData() *data.ItData {
-	it.ViewSign = it.Source.CropSign
 	return it.Source.GetData()
 }

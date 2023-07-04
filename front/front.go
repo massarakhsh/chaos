@@ -15,7 +15,7 @@ type ItFront struct {
 
 var IsTerminating bool
 var IsAutoView bool
-var ViewSign = 0
+var IsSignView bool
 
 func MainStart() {
 	it := &ItFront{}
@@ -65,4 +65,8 @@ func (it *ItFront) buildMain() {
 			right.Append(child, true)
 		}
 	}
+}
+
+func SignalRedraw() {
+	time.AfterFunc(time.Millisecond*1500, func() { IsSignView = true })
 }

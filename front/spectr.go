@@ -18,7 +18,6 @@ type ItSpectr struct {
 	ItPlot
 
 	Interval *ItInterval
-	ViewSign int
 }
 
 func BuildSpectr(interval *ItInterval) *ItSpectr {
@@ -43,14 +42,14 @@ func (it *ItSpectr) Refresh() {
 }
 
 func (it *ItSpectr) Probe() bool {
-	if it.Panel.Sign == it.Interval.Panel.Sign && it.ViewSign == it.Interval.ViewSign {
+	if it.Panel.SignIn == it.Interval.Panel.SignOut {
 		return false
 	} else if dt := it.Interval.Panel.GetData(); dt == nil {
 		return false
 	} else if length := len(dt.Data); length < 2 {
 		return false
 	} else {
-		it.ViewSign = it.Interval.ViewSign
+		it.Panel.SignIn = dt.Sign
 		sign := dt.Sign
 		step := (dt.XMax - dt.XMin) / float64(length)
 		vals := make([]float64, length)
@@ -63,7 +62,7 @@ func (it *ItSpectr) Probe() bool {
 	}
 }
 
-func (it *ItSpectr) storeData(sign int, step float64, info []complex128) {
+func (it *ItSpectr) storeData(sign string, step float64, info []complex128) {
 	dia := len(info)
 	zone := float64(dia) * step
 	serial := &data.ItData{}

@@ -3,6 +3,7 @@ package data
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"sync"
 	"time"
@@ -10,7 +11,7 @@ import (
 )
 
 type ItData struct {
-	Sign       int
+	Sign       string
 	XMin, XMax float64
 	Data       []float64
 }
@@ -34,8 +35,8 @@ var dataPots []ItPot
 var dataFrom int
 var dataTo int
 var dataSize int
-var dataSign int
 var dataLock sync.Mutex
+var dataSign string
 
 func StartData() {
 	dataStart = time.Now()
@@ -87,7 +88,7 @@ func genReset() {
 	dataFrom = 0
 	dataTo = 0
 	dataSize = 0
-	dataSign++
+	dataSign = fmt.Sprint(rand.Intn(1000))
 }
 
 func genAppendPot(pots []ItPot) {
@@ -95,7 +96,7 @@ func genAppendPot(pots []ItPot) {
 	for _, pot := range pots {
 		pushPot(pot)
 	}
-	dataSign++
+	dataSign = fmt.Sprint(rand.Intn(1000))
 	dataLock.Unlock()
 }
 
@@ -143,7 +144,7 @@ func SaveToFile() {
 	}
 }
 
-func GetData(sign int, first int, count int) *ItData {
+func GetData(sign string, first int, count int) *ItData {
 	if sign == dataSign {
 		return nil
 	}
@@ -195,6 +196,6 @@ func ReadFromFile(filename string) {
 		}
 		file.Close()
 	}
-	dataSign++
+	dataSign = fmt.Sprint(rand.Intn(1000))
 	dataLock.Unlock()
 }

@@ -1,7 +1,6 @@
 package front
 
 import (
-	"math/rand"
 	"os"
 
 	"github.com/andlabs/ui"
@@ -83,7 +82,7 @@ func (it *ItControl) setTemp(level int, sel int) {
 	if sel == 1 {
 		it.PopControls(level - 1)
 		IsAutoView = false
-		ViewSign = rand.Int()
+		SignalRedraw()
 		it.addTemp()
 	} else if sel == 2 {
 		it.PopControls(level)
